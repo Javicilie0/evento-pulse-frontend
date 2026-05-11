@@ -1,10 +1,10 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import type { AuthUser } from '@/types/api'
 
 async function getMe(): Promise<AuthUser | null> {
   try {
-    const res = await serverApi().get<AuthUser>('/api/auth/me')
+    const res = await (await authenticatedServerApi()).get<AuthUser>('/api/auth/me')
     return res.data
   } catch {
     return null

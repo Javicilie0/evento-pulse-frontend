@@ -1,11 +1,12 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { UserTicket } from '@/types/api'
+import { mediaUrl } from '@/lib/media'
 
 async function getTickets(): Promise<UserTicket[]> {
   try {
-    const res = await serverApi().get<UserTicket[]>('/api/tickets/mine')
+    const res = await (await authenticatedServerApi()).get<UserTicket[]>('/api/tickets/mine')
     return res.data
   } catch {
     return []
@@ -73,7 +74,7 @@ export default async function TicketsPage() {
 
               {t.qrCodeUrl && (
                 <div className="text-center mt-3">
-                  <img src={t.qrCodeUrl} alt="QR код" style={{ maxWidth: 160, border: '1px solid var(--bs-border-color)', padding: 8, borderRadius: 8 }} />
+                  <img src={mediaUrl(t.qrCodeUrl)} alt="QR код" style={{ maxWidth: 160, border: '1px solid var(--bs-border-color)', padding: 8, borderRadius: 8 }} />
                 </div>
               )}
 

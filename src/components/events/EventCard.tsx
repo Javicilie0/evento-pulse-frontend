@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import type { EventCard as EventCardType } from '@/types/api'
 import { api } from '@/lib/api'
+import { mediaUrl } from '@/lib/media'
 
 interface Props {
   event: EventCardType
@@ -72,7 +73,7 @@ export function EventCard({ event, canManage }: Props) {
       {/* Media */}
       <div className="evt-card__media">
         {event.imageUrl ? (
-          <img src={event.imageUrl} alt={event.title} />
+          <img src={mediaUrl(event.imageUrl)} alt={event.title} />
         ) : (
           <div className="evt-card__media-fallback">
             <i className="bi bi-calendar-event" />

@@ -1,4 +1,4 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -24,7 +24,7 @@ interface Props {
 
 async function getConversation(token: string): Promise<ConversationDetail | null> {
   try {
-    const res = await serverApi().get<ConversationDetail>(`/api/messages/conversations/${token}`)
+    const res = await (await authenticatedServerApi()).get<ConversationDetail>(`/api/messages/conversations/${token}`)
     return res.data
   } catch {
     return null

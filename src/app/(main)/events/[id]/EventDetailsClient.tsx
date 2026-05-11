@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { api } from '@/lib/api'
+import { mediaUrl } from '@/lib/media'
 import type { EventDetails, EventComment, AttendanceStatus } from '@/types/api'
 
 interface Props {
@@ -140,7 +141,7 @@ export function EventDetailsClient({ event: initial }: Props) {
         <article className="groove-paper-card" data-translate-scope>
           {initial.imageUrl && (
             <img
-              src={initial.imageUrl}
+              src={mediaUrl(initial.imageUrl)}
               className="img-fluid rounded mb-3"
               alt={initial.title}
               style={{ maxHeight: 420, width: '100%', objectFit: 'cover' }}
@@ -149,7 +150,7 @@ export function EventDetailsClient({ event: initial }: Props) {
           {initial.imageUrls.length > 0 && (
             <div className="d-flex gap-2 flex-wrap mb-3">
               {initial.imageUrls.map((url, i) => (
-                <img key={i} src={url} className="rounded" style={{ height: 80, width: 80, objectFit: 'cover' }} alt="Event image" />
+                <img key={i} src={mediaUrl(url)} className="rounded" style={{ height: 80, width: 80, objectFit: 'cover' }} alt="Event image" />
               ))}
             </div>
           )}
@@ -390,7 +391,7 @@ export function EventDetailsClient({ event: initial }: Props) {
             {comments.map(c => (
               <article key={c.id} className="social-comment-item">
                 {c.authorImageUrl ? (
-                  <img src={c.authorImageUrl} alt={c.userName} className="social-avatar-xs" />
+                  <img src={mediaUrl(c.authorImageUrl)} alt={c.userName} className="social-avatar-xs" />
                 ) : (
                   <span className="social-avatar-xs social-avatar-xs--fallback">
                     {(c.userName?.[0] ?? '?').toUpperCase()}
@@ -417,7 +418,7 @@ export function EventDetailsClient({ event: initial }: Props) {
                       {c.replies.map(r => (
                         <article key={r.id} className="social-comment-reply-item">
                           {r.authorImageUrl ? (
-                            <img src={r.authorImageUrl} alt={r.userName} className="social-avatar-xs" />
+                            <img src={mediaUrl(r.authorImageUrl)} alt={r.userName} className="social-avatar-xs" />
                           ) : (
                             <span className="social-avatar-xs social-avatar-xs--fallback">
                               {(r.userName?.[0] ?? '?').toUpperCase()}
@@ -456,7 +457,7 @@ export function EventDetailsClient({ event: initial }: Props) {
             {initial.similarEvents.map(ev => (
               <Link key={ev.id} href={`/events/${ev.id}`} className="evt-trending__row">
                 {ev.imageUrl ? (
-                  <img src={ev.imageUrl} alt={ev.title} />
+                  <img src={mediaUrl(ev.imageUrl)} alt={ev.title} />
                 ) : (
                   <span className="evt-trending__placeholder"><i className="bi bi-calendar-event" /></span>
                 )}

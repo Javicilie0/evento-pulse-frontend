@@ -1,8 +1,9 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { EventCard } from '@/components/events/EventCard'
 import { HomeFilters } from '@/components/home/HomeFilters'
 import { HomeMap } from '@/components/home/HomeMap'
 import type { EventCard as EventCardType, PaginatedResult } from '@/types/api'
+import { mediaUrl } from '@/lib/media'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
@@ -22,7 +23,7 @@ interface Props {
 
 async function getEvents(params: Record<string, string>) {
   try {
-    const res = await serverApi().get<PaginatedResult<EventCardType>>('/api/events', { params })
+    const res = await (await authenticatedServerApi()).get<PaginatedResult<EventCardType>>('/api/events', { params })
     return res.data
   } catch {
     return { items: [], totalCount: 0, page: 1, pageSize: 12, hasMore: false }
@@ -79,7 +80,7 @@ export default async function HomePage({ searchParams }: Props) {
       address: e.address,
       startTime: e.startTime,
       genre: e.genre,
-      imageUrl: e.imageUrl,
+      imageUrl: mediaUrl(e.imageUrl),
       organizerName: e.organizerName,
       lat: e.latitude as number,
       lng: e.longitude as number,
@@ -153,7 +154,7 @@ export default async function HomePage({ searchParams }: Props) {
       {/* Map event preview panel */}
       <div id="map-event-preview" className="evt-map-preview" aria-live="polite" style={{ display: 'none' }}>
         <div className="evt-map-preview__inner">
-          <img id="map-preview-img" src="" alt="" className="evt-map-preview__img" style={{ display: 'none' }} />
+          <img id="map-preview-img" alt="" className="evt-map-preview__img" style={{ display: 'none' }} />
           <div className="evt-map-preview__body">
             <div className="evt-map-preview__meta">
               <span id="map-preview-genre" className="evt-card__chip" style={{ position: 'static', display: 'inline-flex' }} />
@@ -271,7 +272,7 @@ export default async function HomePage({ searchParams }: Props) {
               {trendingEvents.length > 0 ? trendingEvents.map((ev, i) => (
                 <Link key={ev.id} href={`/events/${ev.id}`} className="evt-trending__row">
                   {ev.imageUrl ? (
-                    <img src={ev.imageUrl} alt={ev.title} />
+                    <img src={mediaUrl(ev.imageUrl)} alt={ev.title} />
                   ) : (
                     <span className="evt-trending__placeholder">
                       <i className="bi bi-calendar-event" />

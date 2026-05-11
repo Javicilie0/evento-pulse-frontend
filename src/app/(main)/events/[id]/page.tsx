@@ -1,12 +1,13 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { notFound } from 'next/navigation'
 import type { EventDetails } from '@/types/api'
 import { EventDetailsClient } from './EventDetailsClient'
 import type { Metadata } from 'next'
+import { mediaUrl } from '@/lib/media'
 
 async function getEvent(id: string): Promise<EventDetails | null> {
   try {
-    const res = await serverApi().get<EventDetails>(`/api/events/${id}`)
+    const res = await (await authenticatedServerApi()).get<EventDetails>(`/api/events/${id}`)
     return res.data
   } catch {
     return null
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: event.title,
       description: event.description?.slice(0, 200) ?? `${event.city}`,
-      images: event.imageUrl ? [event.imageUrl] : [],
+      images: event.imageUrl ? [mediaUrl(event.imageUrl)!] : [],
     },
   }
 }

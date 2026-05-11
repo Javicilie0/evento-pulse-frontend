@@ -1,4 +1,4 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { EventCard } from '@/components/events/EventCard'
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns'
@@ -20,7 +20,7 @@ export default async function CalendarPage({ searchParams }: Props) {
 
   let events: EventCardType[] = []
   try {
-    const res = await serverApi().get<PaginatedResult<EventCardType>>('/api/events', {
+    const res = await (await authenticatedServerApi()).get<PaginatedResult<EventCardType>>('/api/events', {
       params: { dateFrom, dateTo, pageSize: '48', sort: 'soon' }
     })
     events = res.data.items

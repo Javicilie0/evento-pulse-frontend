@@ -1,5 +1,5 @@
 import { EventCard } from '@/components/events/EventCard'
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { EventCard as EventCardType, PaginatedResult } from '@/types/api'
@@ -31,7 +31,7 @@ interface Props {
 
 async function getEvents(params: Record<string, string>) {
   try {
-    const res = await serverApi().get<PaginatedResult<EventCardType>>('/api/events', { params })
+    const res = await (await authenticatedServerApi()).get<PaginatedResult<EventCardType>>('/api/events', { params })
     return res.data
   } catch {
     return { items: [], totalCount: 0, page: 1, pageSize: 12, hasMore: false }

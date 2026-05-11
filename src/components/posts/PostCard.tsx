@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { api } from '@/lib/api'
+import { mediaUrl } from '@/lib/media'
 import type { Post } from '@/types/api'
 
 interface Props {
@@ -55,10 +56,10 @@ export function PostCard({ post }: Props) {
       {post.mediaUrl && (
         post.mediaType === 'Video' ? (
           <video className="card-img-top card-img-top-fixed bg-dark" controls preload="metadata" muted>
-            <source src={post.mediaUrl} />
+            <source src={mediaUrl(post.mediaUrl)} />
           </video>
         ) : (
-          <img src={post.mediaUrl} className="card-img-top card-img-top-fixed" alt="Post media" />
+          <img src={mediaUrl(post.mediaUrl)} className="card-img-top card-img-top-fixed" alt="Post media" />
         )
       )}
 
@@ -66,7 +67,7 @@ export function PostCard({ post }: Props) {
         <div className="social-post-card__author">
           <Link href={`/profiles/${post.authorId}`} className="social-author-link">
             {post.authorImageUrl ? (
-              <img src={post.authorImageUrl} alt={post.authorName} className="social-avatar-xs" />
+              <img src={mediaUrl(post.authorImageUrl)} alt={post.authorName} className="social-avatar-xs" />
             ) : (
               <span className="social-avatar-xs social-avatar-xs--fallback">{initial}</span>
             )}

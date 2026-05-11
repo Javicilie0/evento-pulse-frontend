@@ -1,11 +1,11 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { Conversation } from '@/types/api'
 
 async function getConversations(): Promise<Conversation[]> {
   try {
-    const res = await serverApi().get<Conversation[]>('/api/messages/conversations')
+    const res = await (await authenticatedServerApi()).get<Conversation[]>('/api/messages/conversations')
     return res.data
   } catch {
     return []

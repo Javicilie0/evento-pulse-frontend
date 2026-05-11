@@ -17,9 +17,25 @@ export function HomeFilters() {
 
     setLoading(true)
     try {
-      const res = await api.post('/api/ai/search', { query: q })
-      const params = res.data as Record<string, string>
-      const qs = new URLSearchParams(params).toString()
+      const res = await api.post('/api/search/smart', { query: q })
+      const data = res.data as {
+        city?: string
+        cities?: string[]
+        genre?: string
+        genres?: string[]
+        keyword?: string
+        dateFrom?: string
+        dateTo?: string
+      }
+      const params = new URLSearchParams()
+      const city = data.city ?? data.cities?.[0]
+      const genre = data.genre ?? data.genres?.[0]
+      if (city) params.set('city', city)
+      if (genre) params.set('genre', genre)
+      if (data.keyword) params.set('search', data.keyword)
+      if (data.dateFrom) params.set('dateFrom', data.dateFrom)
+      if (data.dateTo) params.set('dateTo', data.dateTo)
+      const qs = params.toString()
       router.push(qs ? `/?${qs}` : '/')
     } catch {
       router.push(`/?search=${encodeURIComponent(q)}`)

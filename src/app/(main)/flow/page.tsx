@@ -1,4 +1,4 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { PostCard } from '@/components/posts/PostCard'
 import Link from 'next/link'
 import type { Post, PaginatedResult } from '@/types/api'
@@ -23,7 +23,7 @@ const FILTERS = [
 
 async function getPosts(params: Record<string, string>) {
   try {
-    const res = await serverApi().get<PaginatedResult<Post>>('/api/posts', { params })
+    const res = await (await authenticatedServerApi()).get<PaginatedResult<Post>>('/api/posts', { params })
     return res.data
   } catch {
     return { items: [], totalCount: 0, page: 1, pageSize: 12, hasMore: false }

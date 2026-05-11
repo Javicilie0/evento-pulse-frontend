@@ -1,11 +1,11 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { EventCard } from '@/components/events/EventCard'
 import Link from 'next/link'
 import type { EventCard as EventCardType, PaginatedResult } from '@/types/api'
 
 async function getRecommended(): Promise<EventCardType[]> {
   try {
-    const res = await serverApi().get<PaginatedResult<EventCardType>>('/api/events', {
+    const res = await (await authenticatedServerApi()).get<PaginatedResult<EventCardType>>('/api/events', {
       params: { pageSize: '12', sort: 'popular' }
     })
     return res.data.items

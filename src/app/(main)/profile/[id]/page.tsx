@@ -1,8 +1,9 @@
-import { serverApi } from '@/lib/api'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { UserProfile } from '@/types/api'
+import { mediaUrl } from '@/lib/media'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -10,7 +11,7 @@ interface Props {
 
 async function getProfile(id: string): Promise<UserProfile | null> {
   try {
-    const res = await serverApi().get<UserProfile>(`/api/profiles/${id}`)
+    const res = await (await authenticatedServerApi()).get<UserProfile>(`/api/profiles/${id}`)
     return res.data
   } catch {
     return null
@@ -30,7 +31,7 @@ export default async function ProfilePage({ params }: Props) {
       <article className="social-profile-hero">
         <div className="social-profile-hero__avatar">
           {profile.profileImageUrl ? (
-            <img src={profile.profileImageUrl} alt={displayName} />
+            <img src={mediaUrl(profile.profileImageUrl)} alt={displayName} />
           ) : (
             <span className="evt-avatar-circle">{initial}</span>
           )}

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { mediaUrl } from '@/lib/media'
 
 interface Me {
   id: string
@@ -131,7 +132,7 @@ export default function AccountEditPage() {
           <div className="groove-info-card">
             <div className="text-center mb-3">
               {form.profileImageUrl
-                ? <img src={form.profileImageUrl} className="rounded-circle" width={80} height={80} alt="" style={{ objectFit: 'cover' }} />
+                ? <img src={mediaUrl(form.profileImageUrl)} className="rounded-circle" width={80} height={80} alt="" style={{ objectFit: 'cover' }} />
                 : <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style={{ width: 80, height: 80 }}>
                     <i className="bi bi-person fs-2 text-white" />
                   </div>}

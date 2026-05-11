@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { mediaUrl } from '@/lib/media'
 
 interface AdminUser {
   id: string
@@ -104,7 +105,7 @@ export default function AdminUsersPage() {
                   <td>
                     <div className="d-flex align-items-center gap-2">
                       {u.profileImageUrl
-                        ? <img src={u.profileImageUrl} className="rounded-circle" width={32} height={32} alt="" style={{ objectFit: 'cover' }} />
+                        ? <img src={mediaUrl(u.profileImageUrl)} className="rounded-circle" width={32} height={32} alt="" style={{ objectFit: 'cover' }} />
                         : <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style={{ width: 32, height: 32 }}>
                             <i className="bi bi-person text-white small" />
                           </div>}

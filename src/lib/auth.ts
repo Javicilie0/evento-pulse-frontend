@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import type { AuthUser } from '@/types/api'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:7180'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
