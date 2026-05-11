@@ -1,11 +1,8 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { api } from '@/lib/api'
+
+export const dynamic = 'force-dynamic'
 
 interface OrganizerEvent {
   id: number
@@ -23,33 +20,14 @@ interface OrganizerEvent {
   imageUrl?: string
 }
 
-export default function OrganizerEventsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [events, setEvents] = useState<OrganizerEvent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (status === 'unauthenticated') { router.push('/login'); return }
-    if (status !== 'authenticated') return
-    const roles = (session as any)?.user?.roles as string[] | undefined
-    if (!roles?.includes('Organizer') && !roles?.includes('Admin')) {
-      router.push('/')
-      return
-    }
-    api.get<OrganizerEvent[]>('/api/organizer/events')
-      .then(r => setEvents(r.data))
-      .catch(() => setError('Събитията на организатора не можаха да се заредят.'))
-      .finally(() => setLoading(false))
-  }, [status, session, router])
-
-  if (loading) {
-    return (
-      <section className="groove-app-page">
-        <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
-      </section>
-    )
+export default async function OrganizerEventsPage() {
+  let events: OrganizerEvent[] = []
+  let error: string | null = null
+  try {
+    const res = await (await authenticatedServerApi()).get<OrganizerEvent[]>('/api/organizer/events')
+    events = res.data
+  } catch {
+    error = 'Събитията на организатора не можаха да се заредят.'
   }
 
   if (error) {
@@ -127,11 +105,12 @@ export default function OrganizerEventsPage() {
                       <span className="text-muted">/{ev.ticketsCount}</span>
                     </td>
                     <td>{ev.likesCount}</td>
-                    <td>{ev.vipBoostScore > 0 ? <span className="badge bg-warning text-dark"><i className="bi bi-star-fill" /> {ev.vipBoostScore}</span> : '—'}</td>
+                    <td>{ev.vipBoostScore > 0
+                      ? <span className="badge bg-warning text-dark"><i className="bi bi-star-fill" /> {ev.vipBoostScore}</span>
+                      : '—'}
+                    </td>
                     <td>
-                      <Link href={`/events/${ev.id}`} className="groove-button groove-button-paper groove-button--sm">
-                        Виж
-                      </Link>
+                      <Link href={`/events/${ev.id}`} className="groove-button groove-button-paper groove-button--sm">Виж</Link>
                     </td>
                   </tr>
                 ))}
