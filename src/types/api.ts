@@ -161,6 +161,7 @@ export interface UserTicket {
   eventCity: string
   ticketType: string
   qrCodeUrl: string
+  pdfUrl?: string
   isUsed: boolean
   purchasedAt: string
 }

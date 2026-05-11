@@ -2,15 +2,14 @@
 
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { usePathname } from 'next/navigation'
 
 export function Navbar() {
   const { data: session } = useSession()
-  const pathname = usePathname()
 
-  const isAdmin = session?.user?.roles?.includes('Admin')
-  const isOrganizer = session?.user?.roles?.includes('Organizer') || isAdmin
-  const isValidator = session?.user?.roles?.includes('Validator')
+  const roles = session?.user?.roles ?? []
+  const isAdmin = roles.includes('Admin')
+  const isOrganizer = roles.includes('Organizer')
+  const isValidator = roles.includes('Validator')
 
   const initials = (() => {
     if (!session) return '?'
@@ -23,9 +22,7 @@ export function Navbar() {
 
   const displayName = (() => {
     if (!session) return ''
-    const first = session.user.firstName
-    const last = session.user.lastName
-    const full = [first, last].filter(Boolean).join(' ')
+    const full = [session.user.firstName, session.user.lastName].filter(Boolean).join(' ')
     return full || session.user.name || session.user.email || 'Профил'
   })()
 
@@ -33,17 +30,15 @@ export function Navbar() {
     <header className="site-header">
       <nav className="navbar navbar-expand-md navbar-dark border-bottom shadow-sm site-navbar">
         <div className="container-fluid">
-          {/* Brand */}
           <Link className="navbar-brand fw-bold d-inline-flex align-items-center gap-2 site-brand" href="/">
             <img src="/img/logo.svg" alt="Evento" className="site-brand__logo" />
             <span className="site-brand__name notranslate" translate="no">Evento</span>
           </Link>
 
-          {/* Theme + Lang toggles */}
           <button
             id="app-theme-btn"
             type="button"
-            onClick={() => (window as any).toggleAppTheme?.()}
+            onClick={() => window.toggleAppTheme?.()}
             title="Светла / Тъмна тема"
             style={{
               background: 'transparent',
@@ -62,7 +57,7 @@ export function Navbar() {
           <button
             id="app-lang-btn"
             type="button"
-            onClick={() => (window as any).toggleAppLang?.()}
+            onClick={() => window.toggleAppLang?.()}
             style={{
               background: '#0d1424',
               color: '#fff',
@@ -75,10 +70,9 @@ export function Navbar() {
               whiteSpace: 'nowrap',
             }}
           >
-            🇬🇧 EN
+            EN
           </button>
 
-          {/* Burger */}
           <button
             className="navbar-toggler"
             type="button"
@@ -91,7 +85,6 @@ export function Navbar() {
             <span className="navbar-toggler-icon" />
           </button>
 
-          {/* Nav links */}
           <div className="collapse navbar-collapse" id="mainNav">
             <ul className="navbar-nav me-auto mb-2 mb-md-0 site-navbar__primary">
               <li className="nav-item">
@@ -118,23 +111,22 @@ export function Navbar() {
                   </Link>
                 </li>
               )}
-              {!isAdmin && isOrganizer && (
+              {isOrganizer && (
                 <li className="nav-item">
                   <Link className="nav-link" href="/organizer/dashboard">
-                    <i className="bi bi-speedometer2" /> <span data-i18n="nav.organizer.panel">Organizer Panel</span>
+                    <i className="bi bi-speedometer2" /> <span data-i18n="nav.organizer.panel">Организатор</span>
                   </Link>
                 </li>
               )}
-              {!isAdmin && !isOrganizer && isValidator && (
+              {isValidator && (
                 <li className="nav-item">
-                  <Link className="nav-link" href="/tickets/scan">
-                    <i className="bi bi-qr-code-scan" /> <span data-i18n="nav.validate">Validate tickets</span>
+                  <Link className="nav-link" href="/tickets/validate">
+                    <i className="bi bi-qr-code-scan" /> <span data-i18n="nav.validate">Валидирай</span>
                   </Link>
                 </li>
               )}
             </ul>
 
-            {/* Auth area */}
             <ul className="navbar-nav">
               {session ? (
                 <li className="nav-item dropdown site-account-menu">
@@ -160,49 +152,37 @@ export function Navbar() {
                     </li>
                     <li>
                       <Link className="dropdown-item" href={`/profile/${session.user.id}`}>
-                        <i className="bi bi-person-lines-fill" /> <span data-i18n="profile.public">Public profile</span>
+                        <i className="bi bi-person-lines-fill" /> <span data-i18n="profile.public">Публичен профил</span>
                       </Link>
                     </li>
                     <li>
                       <Link className="dropdown-item" href="/flow/new">
-                        <i className="bi bi-plus-square" /> <span data-i18n="post.create">Create post</span>
+                        <i className="bi bi-plus-square" /> <span data-i18n="post.create">Нова публикация</span>
                       </Link>
                     </li>
                     <li>
                       <Link className="dropdown-item" href="/events/recommended">
-                        <i className="bi bi-stars" /> <span data-i18n="nav.recommended">Recommended</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item" href="/wrapped">
-                        <i className="bi bi-bar-chart-line" /> <span data-i18n="nav.wrapped">Year Wrapped</span>
+                        <i className="bi bi-stars" /> <span data-i18n="nav.recommended">Препоръчани</span>
                       </Link>
                     </li>
                     <li>
                       <Link className="dropdown-item" href="/tickets">
-                        <i className="bi bi-ticket-perforated" /> <span data-i18n="nav.mytickets">My tickets</span>
+                        <i className="bi bi-ticket-perforated" /> <span data-i18n="nav.mytickets">Моите билети</span>
                       </Link>
                     </li>
-                    {(isOrganizer || isAdmin || isValidator) && (
+                    {(isOrganizer || isValidator) && (
                       <>
                         <li><hr className="dropdown-divider" /></li>
-                        {(isOrganizer || isAdmin) && (
-                          <>
-                            <li>
-                              <Link className="dropdown-item" href="/organizer/dashboard">
-                                <i className="bi bi-speedometer2" /> <span data-i18n="organizer.dashboard">Organizer dashboard</span>
-                              </Link>
-                            </li>
-                            <li>
-                              <Link className="dropdown-item" href="/organizer/pages">
-                                <i className="bi bi-person-badge" /> <span data-i18n="organizer.public.pages">Public organizer pages</span>
-                              </Link>
-                            </li>
-                          </>
+                        {isOrganizer && (
+                          <li>
+                            <Link className="dropdown-item" href="/organizer/dashboard">
+                              <i className="bi bi-speedometer2" /> <span data-i18n="organizer.dashboard">Организаторско табло</span>
+                            </Link>
+                          </li>
                         )}
                         <li>
-                          <Link className="dropdown-item" href="/tickets/scan">
-                            <i className="bi bi-qr-code-scan" /> <span data-i18n="nav.validate">Validate tickets</span>
+                          <Link className="dropdown-item" href="/tickets/validate">
+                            <i className="bi bi-qr-code-scan" /> <span data-i18n="nav.validate">Валидиране</span>
                           </Link>
                         </li>
                       </>
@@ -216,11 +196,8 @@ export function Navbar() {
                     )}
                     <li><hr className="dropdown-divider" /></li>
                     <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => signOut({ callbackUrl: '/' })}
-                      >
-                        <i className="bi bi-box-arrow-right" /> <span data-i18n="auth.logout">Logout</span>
+                      <button className="dropdown-item" onClick={() => signOut({ callbackUrl: '/' })}>
+                        <i className="bi bi-box-arrow-right" /> <span data-i18n="auth.logout">Изход</span>
                       </button>
                     </li>
                   </ul>
@@ -245,4 +222,11 @@ export function Navbar() {
       </nav>
     </header>
   )
+}
+
+declare global {
+  interface Window {
+    toggleAppTheme?: () => void
+    toggleAppLang?: () => void
+  }
 }

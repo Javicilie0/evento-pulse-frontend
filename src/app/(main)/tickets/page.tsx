@@ -2,7 +2,6 @@ import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { UserTicket } from '@/types/api'
-import { mediaUrl } from '@/lib/media'
 
 async function getTickets(): Promise<UserTicket[]> {
   try {
@@ -23,7 +22,7 @@ export default async function TicketsPage() {
           <span className="groove-stamp groove-stamp-red" data-i18n="tickets.page.stamp">Билети</span>
           <h1 data-i18n-html="tickets.page.title">Твоите <span>запазени</span> места.</h1>
           <p data-i18n="tickets.page.desc">
-            Всички купени билети са тук, заедно с QR кода и бърз достъп до PDF версията.
+            Всички купени билети са тук, заедно с QR кода и PDF версията.
           </p>
         </div>
         <div className="groove-page-actions">
@@ -74,7 +73,7 @@ export default async function TicketsPage() {
 
               {t.qrCodeUrl && (
                 <div className="text-center mt-3">
-                  <img src={mediaUrl(t.qrCodeUrl)} alt="QR код" style={{ maxWidth: 160, border: '1px solid var(--bs-border-color)', padding: 8, borderRadius: 8 }} />
+                  <img src={`/api/tickets/${t.id}/qr`} alt="QR код" style={{ maxWidth: 160, border: '1px solid var(--bs-border-color)', padding: 8, borderRadius: 8 }} />
                 </div>
               )}
 
@@ -82,6 +81,9 @@ export default async function TicketsPage() {
                 <Link href={`/events/${t.eventId}`} className="groove-button groove-button-paper">
                   <i className="bi bi-calendar-event" /> <span data-i18n="tickets.view.event">Виж събитието</span>
                 </Link>
+                <a href={`/api/tickets/${t.id}/pdf`} className="groove-button groove-button-dark">
+                  <i className="bi bi-file-earmark-pdf" /> <span>PDF</span>
+                </a>
               </div>
             </article>
           ))}

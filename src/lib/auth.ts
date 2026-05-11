@@ -2,6 +2,17 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import type { AuthUser } from '@/types/api'
 
+interface EventoAuthUser {
+  id: string
+  email: string
+  name: string
+  image: string | null
+  accessToken: string
+  roles: string[]
+  firstName?: string
+  lastName?: string
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:7180'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -50,19 +61,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.accessToken = (user as any).accessToken
-        token.roles = (user as any).roles
-        token.firstName = (user as any).firstName
-        token.lastName = (user as any).lastName
+      const eventoToken = token as typeof token & {
+        userId?: string
+        accessToken?: string
+        roles?: string[]
+        firstName?: string
+        lastName?: string
       }
-      return token
+      if (user) {
+        const eventoUser = user as EventoAuthUser
+        eventoToken.userId = eventoUser.id
+        eventoToken.accessToken = eventoUser.accessToken
+        eventoToken.roles = eventoUser.roles
+        eventoToken.firstName = eventoUser.firstName
+        eventoToken.lastName = eventoUser.lastName
+      }
+      return eventoToken
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string
-      session.user.roles = token.roles as string[]
-      session.user.firstName = token.firstName as string | undefined
-      session.user.lastName = token.lastName as string | undefined
+      const eventoToken = token as typeof token & {
+        userId?: string
+        accessToken?: string
+        roles?: string[]
+        firstName?: string
+        lastName?: string
+      }
+      session.accessToken = eventoToken.accessToken as string
+      session.user.id = eventoToken.userId as string
+      session.user.roles = eventoToken.roles as string[]
+      session.user.firstName = eventoToken.firstName
+      session.user.lastName = eventoToken.lastName
       return session
     },
   },
