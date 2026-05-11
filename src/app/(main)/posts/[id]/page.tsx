@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import type { Post } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
+import { PostComments } from './PostComments'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -61,18 +62,7 @@ export default async function PostDetailsPage({ params }: Props) {
         </div>
       </article>
 
-      {post.comments && post.comments.length > 0 && (
-        <div className="groove-paper-card mt-4">
-          <h2 className="groove-panel-title mb-3">Коментари</h2>
-          {post.comments.map(comment => (
-            <article key={comment.id} className="border-bottom py-3">
-              <strong>{comment.userName}</strong>
-              <p className="mb-1">{comment.content}</p>
-              <small className="text-muted">{format(new Date(comment.createdAt), 'dd.MM.yyyy HH:mm')}</small>
-            </article>
-          ))}
-        </div>
-      )}
+      <PostComments postId={post.id} initialComments={post.comments ?? []} />
     </section>
   )
 }

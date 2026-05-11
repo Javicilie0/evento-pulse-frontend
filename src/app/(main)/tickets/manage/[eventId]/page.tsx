@@ -107,6 +107,9 @@ export default function ManageTicketsPage({ params }: { params: Promise<{ eventI
                     <td>{ticket.quantityRemaining} / {ticket.quantityTotal}</td>
                     <td>{ticket.isActive ? <span className="badge bg-success">Активен</span> : <span className="badge bg-secondary">Спрян</span>}</td>
                     <td className="text-end">
+                      <Link href={`/tickets/edit/${ticket.id}`} className="groove-button groove-button-paper groove-button--sm me-2">
+                        <i className="bi bi-pencil" />
+                      </Link>
                       <button className="groove-button groove-button-paper groove-button--sm text-danger" type="button" onClick={() => deleteTicket(ticket.id)} disabled={actionId === ticket.id}>
                         {actionId === ticket.id ? <span className="spinner-border spinner-border-sm" /> : <i className="bi bi-trash" />}
                       </button>

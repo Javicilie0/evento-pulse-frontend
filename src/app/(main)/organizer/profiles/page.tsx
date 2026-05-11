@@ -33,7 +33,10 @@ export default async function OrganizerProfilesPage() {
           <span className="groove-kicker">Организатор</span>
           <h1 className="groove-panel-title">Публични страници</h1>
         </div>
-        <Link href="/organizer/dashboard" className="groove-button groove-button-paper"><i className="bi bi-arrow-left" /> Табло</Link>
+        <div className="groove-page-actions">
+          <Link href="/organizer/profiles/edit/new" className="groove-button groove-button-dark"><i className="bi bi-plus-lg" /> Нова</Link>
+          <Link href="/organizer/dashboard" className="groove-button groove-button-paper"><i className="bi bi-arrow-left" /> Табло</Link>
+        </div>
       </div>
 
       {profiles.length === 0 ? (
@@ -64,6 +67,11 @@ export default async function OrganizerProfilesPage() {
                   {profile.isApproved ? <span className="badge bg-success">Одобрена</span> : <span className="badge bg-warning text-dark">Чака</span>}
                   <span className="badge bg-secondary">{profile.eventsCount} събития</span>
                   <span className="badge bg-secondary">{profile.postsCount} поста</span>
+                </div>
+                <div className="groove-form-actions mt-3">
+                  <Link href={`/organizer/profiles/edit/${profile.id}`} className="groove-button groove-button-paper groove-button--sm">
+                    <i className="bi bi-pencil" /> Редакция
+                  </Link>
                 </div>
               </article>
             </div>

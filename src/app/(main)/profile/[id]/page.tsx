@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import type { UserProfile } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
+import { ProfileActions } from './ProfileActions'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -54,11 +55,7 @@ export default async function ProfilePage({ params }: Props) {
           </div>
 
           {!profile.isOwnProfile && (
-            <div className="groove-cta-row mt-3">
-              <Link href={`/inbox?userId=${profile.id}`} className="groove-button groove-button-dark">
-                <i className="bi bi-chat-dots" /> <span data-i18n="messages.message.page">Съобщение</span>
-              </Link>
-            </div>
+            <ProfileActions profileId={profile.id} initialIsFollowing={profile.isFollowing} initialFollowerCount={profile.followerCount} />
           )}
 
           {profile.isOwnProfile && (
