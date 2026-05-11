@@ -28,43 +28,50 @@ export function EventCard({ event, canManage }: Props) {
 
   async function handleLike() {
     if (!isAuthed) return (window.location.href = '/login')
+    const prevLikes = likes
+    const prevIsLiked = isLiked
+    setIsLiked(!isLiked)
+    setLikes(isLiked ? likes - 1 : likes + 1)
     try {
-      if (isLiked) {
-        const r = await api.post(`/api/events/${event.id}/unlike`)
-        setLikes(r.data.likesCount); setIsLiked(false)
-      } else {
-        const r = await api.post(`/api/events/${event.id}/like`)
-        setLikes(r.data.likesCount); setIsLiked(true)
-      }
-    } catch {}
+      const r = await api.post(`/api/events/${event.id}/${isLiked ? 'unlike' : 'like'}`)
+      setLikes(r.data.likesCount)
+    } catch {
+      setIsLiked(prevIsLiked)
+      setLikes(prevLikes)
+    }
   }
 
   async function handleSave() {
     if (!isAuthed) return (window.location.href = '/login')
+    const prevSaved = isSaved
+    setIsSaved(!isSaved)
     try {
-      if (isSaved) {
-        await api.post(`/api/events/${event.id}/unsave`); setIsSaved(false)
-      } else {
-        await api.post(`/api/events/${event.id}/save`); setIsSaved(true)
-      }
-    } catch {}
+      await api.post(`/api/events/${event.id}/${isSaved ? 'unsave' : 'save'}`)
+    } catch {
+      setIsSaved(prevSaved)
+    }
   }
 
   async function handleAttend(status: 'Going' | 'Interested') {
     if (!isAuthed) return (window.location.href = '/login')
+    const prevAttendance = attendance
+    const prevGoing = goingCount
+    const prevInterested = interestedCount
+    const removing = attendance === status
+    setAttendance(removing ? null : status)
+    if (status === 'Going') setGoingCount(g => removing ? g - 1 : g + 1)
+    else setInterestedCount(i => removing ? i - 1 : i + 1)
     try {
-      if (attendance === status) {
-        const r = await api.delete(`/api/events/${event.id}/attend`)
-        setAttendance(null)
-        setGoingCount(r.data.goingCount)
-        setInterestedCount(r.data.interestedCount)
-      } else {
-        const r = await api.post(`/api/events/${event.id}/attend`, { status })
-        setAttendance(status)
-        setGoingCount(r.data.goingCount)
-        setInterestedCount(r.data.interestedCount)
-      }
-    } catch {}
+      const r = removing
+        ? await api.delete(`/api/events/${event.id}/attend`)
+        : await api.post(`/api/events/${event.id}/attend`, { status })
+      setGoingCount(r.data.goingCount)
+      setInterestedCount(r.data.interestedCount)
+    } catch {
+      setAttendance(prevAttendance)
+      setGoingCount(prevGoing)
+      setInterestedCount(prevInterested)
+    }
   }
 
   return (

@@ -129,18 +129,8 @@ function DrawerInner({ postId, onClose, onCountChange }: Props) {
       />
 
       {/* Drawer */}
-      <div
-        style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0,
-          width: 'min(480px, 100vw)',
-          zIndex: 1045,
-          display: 'flex', flexDirection: 'column',
-          background: 'var(--groove-paper, #f5f0e8)',
-          borderLeft: '2px solid rgba(36,29,25,0.18)',
-          boxShadow: '-8px 0 32px rgba(13,20,36,0.14)',
-          animation: 'slideInRight 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        }}
-      >
+      <div className="comments-drawer">
+        <div className="comments-drawer__handle" />
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -226,6 +216,41 @@ function DrawerInner({ postId, onClose, onCountChange }: Props) {
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes slideInUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+
+        .comments-drawer {
+          position: fixed;
+          top: 0; right: 0; bottom: 0;
+          width: min(480px, 100vw);
+          z-index: 1045;
+          display: flex; flex-direction: column;
+          background: var(--groove-paper, #f5f0e8);
+          border-left: 2px solid rgba(36,29,25,0.18);
+          box-shadow: -8px 0 32px rgba(13,20,36,0.14);
+          animation: slideInRight 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .comments-drawer__handle { display: none; }
+
+        @media (max-width: 767.98px) {
+          .comments-drawer {
+            top: auto; left: 0; right: 0; bottom: 0;
+            width: 100%;
+            height: 88dvh;
+            border-left: none;
+            border-top: 2px solid rgba(36,29,25,0.18);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -8px 32px rgba(13,20,36,0.14);
+            animation: slideInUp 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          }
+          .comments-drawer__handle {
+            display: block;
+            width: 40px; height: 4px;
+            background: rgba(36,29,25,0.25);
+            border-radius: 2px;
+            margin: 10px auto 0;
+            flex-shrink: 0;
+          }
+        }
       `}</style>
     </>
   )
