@@ -10,6 +10,8 @@ const PROTECTED_PREFIXES = [
   '/organizer',
   '/admin',
   '/preferences',
+  '/layouts',
+  '/wrapped',
 ]
 
 export default auth((req) => {
