@@ -111,7 +111,7 @@ export function Navbar() {
                   </Link>
                 </li>
               )}
-              {isOrganizer && (
+              {!isAdmin && isOrganizer && (
                 <li className="nav-item">
                   <Link className="nav-link" href="/organizer/dashboard">
                     <i className="bi bi-speedometer2" /> <span data-i18n="nav.organizer.panel">Организатор</span>
@@ -170,10 +170,10 @@ export function Navbar() {
                         <i className="bi bi-ticket-perforated" /> <span data-i18n="nav.mytickets">Моите билети</span>
                       </Link>
                     </li>
-                    {(isOrganizer || isValidator) && (
+                    {(isOrganizer || isAdmin || isValidator) && (
                       <>
                         <li><hr className="dropdown-divider" /></li>
-                        {isOrganizer && (
+                        {(isOrganizer || isAdmin) && (
                           <li>
                             <Link className="dropdown-item" href="/organizer/dashboard">
                               <i className="bi bi-speedometer2" /> <span data-i18n="organizer.dashboard">Организаторско табло</span>
