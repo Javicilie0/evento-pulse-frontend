@@ -271,7 +271,7 @@ export default async function HomePage({ searchParams }: Props) {
               {trendingEvents.length > 0 ? trendingEvents.map((ev, i) => (
                 <Link key={ev.id} href={`/events/${ev.id}`} className="evt-trending__row">
                   {ev.imageUrl ? (
-                    <img src={mediaUrl(ev.imageUrl)} alt={ev.title} />
+                    <img src={mediaUrl(ev.imageUrl)} alt={ev.title} loading="lazy" decoding="async" />
                   ) : (
                     <span className="evt-trending__placeholder">
                       <i className="bi bi-calendar-event" />
