@@ -51,6 +51,9 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
           <div className="groove-cta-row mt-3">
             {page.website && <a className="groove-button groove-button-paper" href={page.website} target="_blank">Сайт</a>}
             {page.contactEmail && <a className="groove-button groove-button-dark" href={`mailto:${page.contactEmail}`}>Контакт</a>}
+            <Link className="groove-button groove-button-paper" href={`/inbox?pageId=${page.id}`}>
+              <i className="bi bi-chat-dots" /> Message page
+            </Link>
           </div>
         </div>
       </article>

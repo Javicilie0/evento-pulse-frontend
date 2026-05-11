@@ -138,6 +138,13 @@ export interface Conversation {
   otherUserId: string
   otherUserName: string
   otherUserImageUrl?: string
+  organizerProfileId?: number
+  pageName?: string
+  pageImageUrl?: string
+  currentUserOwnsPage?: boolean
+  isPageConversation?: boolean
+  isIncomingRequest?: boolean
+  listKey?: 'personal' | 'page' | 'requests'
   lastMessage?: string
   lastMessageAt?: string
   unreadCount: number

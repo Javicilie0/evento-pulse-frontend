@@ -1,8 +1,8 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { format } from 'date-fns'
 import type { Conversation } from '@/types/api'
+import { InboxBoard } from './InboxBoard'
 
 async function getConversations(): Promise<Conversation[]> {
   try {
@@ -13,11 +13,19 @@ async function getConversations(): Promise<Conversation[]> {
   }
 }
 
-export default async function InboxPage({ searchParams }: { searchParams?: Promise<{ userId?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams?: Promise<{ userId?: string; pageId?: string }> }) {
   const sp = searchParams ? await searchParams : undefined
   if (sp?.userId) {
     try {
       const res = await (await authenticatedServerApi()).post<{ token: string }>('/api/messages/conversations', { userId: sp.userId })
+      redirect(`/inbox/${res.data.token}`)
+    } catch {
+      redirect('/inbox')
+    }
+  }
+  if (sp?.pageId) {
+    try {
+      const res = await (await authenticatedServerApi()).post<{ token: string }>('/api/messages/conversations/page', { organizerProfileId: Number(sp.pageId) })
       redirect(`/inbox/${res.data.token}`)
     } catch {
       redirect('/inbox')
@@ -50,27 +58,7 @@ export default async function InboxPage({ searchParams }: { searchParams?: Promi
           </Link>
         </div>
       ) : (
-        <div className="social-message-list mt-4">
-          {conversations.map(c => (
-            <Link key={c.token} href={`/inbox/${c.token}`} className="social-message-row">
-              <span className="social-avatar-xs social-avatar-xs--fallback">
-                {(c.otherUserName?.[0] ?? '?').toUpperCase()}
-              </span>
-              <div className="social-message-row__body">
-                <strong>{c.otherUserName}</strong>
-                {c.lastMessage && <p className="text-muted small mb-0 text-truncate">{c.lastMessage}</p>}
-              </div>
-              <div className="social-message-row__meta">
-                {c.lastMessageAt && (
-                  <small className="text-muted">{format(new Date(c.lastMessageAt), 'dd.MM HH:mm')}</small>
-                )}
-                {c.unreadCount > 0 && (
-                  <span className="badge bg-primary rounded-pill">{c.unreadCount}</span>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
+        <InboxBoard conversations={conversations} />
       )}
     </section>
   )
