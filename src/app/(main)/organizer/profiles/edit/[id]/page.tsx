@@ -19,6 +19,7 @@ interface ProfileForm {
   facebookUrl: string
   tikTokUrl: string
   brandColor: string
+  businessWorkspaceId: string
   isDefault: boolean
 }
 
@@ -36,22 +37,27 @@ const emptyForm: ProfileForm = {
   facebookUrl: '',
   tikTokUrl: '',
   brandColor: '',
+  businessWorkspaceId: '',
   isDefault: false,
 }
+
+interface Workspace { id: number; displayName: string; isDefault: boolean }
 
 export default function OrganizerProfileEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const isNew = id === 'new'
   const router = useRouter()
   const [form, setForm] = useState<ProfileForm>(emptyForm)
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    api.get<Workspace[]>('/api/organizer/workspaces').then(r => setWorkspaces(r.data)).catch(() => {})
     if (isNew) return
     api.get<ProfileForm>(`/api/organizer/profiles/${id}`)
-      .then(r => setForm({ ...emptyForm, ...r.data }))
+      .then(r => setForm({ ...emptyForm, ...r.data, businessWorkspaceId: (r.data as any).businessWorkspaceId ? String((r.data as any).businessWorkspaceId) : '' }))
       .catch(() => setError('Страницата не може да бъде заредена.'))
       .finally(() => setLoading(false))
   }, [id, isNew])
@@ -66,12 +72,12 @@ export default function OrganizerProfileEditPage({ params }: { params: Promise<{
     setError('')
     try {
       if (isNew) {
-        const res = await api.post<{ id: number }>('/api/organizer/profiles', form)
+        const res = await api.post<{ id: number }>('/api/organizer/profiles', { ...form, businessWorkspaceId: form.businessWorkspaceId ? Number(form.businessWorkspaceId) : undefined })
         router.push('/organizer/profiles')
         router.refresh()
         return res
       }
-      await api.put(`/api/organizer/profiles/${id}`, form)
+      await api.put(`/api/organizer/profiles/${id}`, { ...form, businessWorkspaceId: form.businessWorkspaceId ? Number(form.businessWorkspaceId) : undefined })
       router.push('/organizer/profiles')
       router.refresh()
     } catch (err: any) {
@@ -108,6 +114,17 @@ export default function OrganizerProfileEditPage({ params }: { params: Promise<{
               <Field label="Facebook" value={form.facebookUrl} onChange={v => set('facebookUrl', v)} />
               <Field label="TikTok" value={form.tikTokUrl} onChange={v => set('tikTokUrl', v)} />
               <Field label="Цвят" value={form.brandColor} onChange={v => set('brandColor', v)} />
+              {workspaces.length > 0 && (
+                <div className="col-md-6">
+                  <div className="auth-zine-field">
+                    <label htmlFor="workspace">Workspace</label>
+                    <select id="workspace" className="form-select" value={form.businessWorkspaceId} onChange={e => set('businessWorkspaceId', e.target.value)}>
+                      <option value="">Без workspace</option>
+                      {workspaces.map(w => <option key={w.id} value={w.id}>{w.displayName}{w.isDefault ? ' (основен)' : ''}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
               <div className="col-12">
                 <div className="auth-zine-field">
                   <label htmlFor="description">Описание</label>

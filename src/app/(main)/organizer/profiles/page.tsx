@@ -9,6 +9,8 @@ interface OrganizerProfile {
   city?: string
   avatarImageUrl?: string
   website?: string
+  businessWorkspaceId?: number
+  workspaceName?: string
   isDefault: boolean
   isApproved: boolean
   eventsCount: number
@@ -59,6 +61,7 @@ export default async function OrganizerProfilesPage() {
                   <div>
                     <h2 className="h5 mb-1">{profile.displayName}</h2>
                     <div className="small text-muted">{profile.city}</div>
+                    {profile.workspaceName && <div className="small text-muted">Workspace: {profile.workspaceName}</div>}
                   </div>
                 </div>
                 {profile.tagline && <p className="mt-3 mb-2">{profile.tagline}</p>}

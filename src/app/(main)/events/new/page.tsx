@@ -20,12 +20,14 @@ const GENRE_LABELS: Record<string, string> = {
   Techno: 'Техно', House: 'Хаус', Jazz: 'Джаз', Other: 'Друго',
 }
 
-interface OrganizerProfile { id: number; displayName: string; isDefault: boolean }
+interface OrganizerProfile { id: number; displayName: string; isDefault: boolean; businessWorkspaceId?: number }
+interface Workspace { id: number; displayName: string; isDefault: boolean }
 
 export default function CreateEventPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [profiles, setProfiles] = useState<OrganizerProfile[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -35,6 +37,7 @@ export default function CreateEventPage() {
     address: '',
     city: '',
     imageUrl: '',
+    businessWorkspaceId: '',
     organizerProfileId: '',
   })
   const [loading, setLoading] = useState(false)
@@ -51,7 +54,12 @@ export default function CreateEventPage() {
     api.get<OrganizerProfile[]>('/api/organizer/profiles').then(r => {
       setProfiles(r.data)
       const def = r.data.find(p => p.isDefault)
-      if (def) setForm(f => ({ ...f, organizerProfileId: String(def.id) }))
+      if (def) setForm(f => ({ ...f, organizerProfileId: String(def.id), businessWorkspaceId: def.businessWorkspaceId ? String(def.businessWorkspaceId) : f.businessWorkspaceId }))
+    })
+    api.get<Workspace[]>('/api/organizer/workspaces').then(r => {
+      setWorkspaces(r.data)
+      const def = r.data.find(w => w.isDefault)
+      if (def) setForm(f => ({ ...f, businessWorkspaceId: f.businessWorkspaceId || String(def.id) }))
     })
   }, [status, session, router])
 
@@ -69,6 +77,7 @@ export default function CreateEventPage() {
         startTime: new Date(form.startTime).toISOString(),
         endTime: new Date(form.endTime).toISOString(),
         organizerProfileId: form.organizerProfileId ? Number(form.organizerProfileId) : undefined,
+        businessWorkspaceId: form.businessWorkspaceId ? Number(form.businessWorkspaceId) : undefined,
         imageUrl: form.imageUrl || undefined,
       })
       router.push(`/events/${res.data.id}`)
@@ -162,6 +171,21 @@ export default function CreateEventPage() {
                     onChange={e => set('organizerProfileId', e.target.value)}>
                     {profiles.map(p => (
                       <option key={p.id} value={p.id}>{p.displayName}{p.isDefault ? ' (по подразбиране)' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {workspaces.length > 0 && (
+              <div className="col-md-6">
+                <div className="auth-zine-field">
+                  <label htmlFor="workspace">Workspace</label>
+                  <select id="workspace" className="form-select" value={form.businessWorkspaceId}
+                    onChange={e => set('businessWorkspaceId', e.target.value)}>
+                    <option value="">Без workspace</option>
+                    {workspaces.map(w => (
+                      <option key={w.id} value={w.id}>{w.displayName}{w.isDefault ? ' (основен)' : ''}</option>
                     ))}
                   </select>
                 </div>

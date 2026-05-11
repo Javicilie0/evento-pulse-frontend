@@ -12,6 +12,7 @@ const PROTECTED_PREFIXES = [
   '/preferences',
   '/layouts',
   '/wrapped',
+  '/search',
 ]
 
 export default auth((req) => {

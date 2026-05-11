@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
@@ -38,6 +38,9 @@ function toLocalInput(value: string) {
   return local.toISOString().slice(0, 16)
 }
 
+interface OrganizerProfile { id: number; displayName: string; isDefault: boolean; businessWorkspaceId?: number }
+interface Workspace { id: number; displayName: string; isDefault: boolean }
+
 export function EditEventClient({ event }: { event: EventDetails }) {
   const router = useRouter()
   const [form, setForm] = useState({
@@ -50,13 +53,21 @@ export function EditEventClient({ event }: { event: EventDetails }) {
     city: event.city ?? '',
     imageUrl: event.imageUrl ?? '',
     organizerProfileId: event.organizerProfileId ? String(event.organizerProfileId) : '',
+    businessWorkspaceId: event.businessWorkspaceId ? String(event.businessWorkspaceId) : '',
   })
+  const [profiles, setProfiles] = useState<OrganizerProfile[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   function set(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
+
+  useEffect(() => {
+    api.get<OrganizerProfile[]>('/api/organizer/profiles').then(r => setProfiles(r.data)).catch(() => {})
+    api.get<Workspace[]>('/api/organizer/workspaces').then(r => setWorkspaces(r.data)).catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -68,6 +79,7 @@ export function EditEventClient({ event }: { event: EventDetails }) {
         startTime: new Date(form.startTime).toISOString(),
         endTime: new Date(form.endTime).toISOString(),
         organizerProfileId: form.organizerProfileId ? Number(form.organizerProfileId) : undefined,
+        businessWorkspaceId: form.businessWorkspaceId ? Number(form.businessWorkspaceId) : undefined,
         imageUrl: form.imageUrl || undefined,
       })
       router.push(`/events/${event.id}`)
@@ -142,6 +154,28 @@ export function EditEventClient({ event }: { event: EventDetails }) {
                 <input id="imageUrl" type="url" className="form-control" value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
               </div>
             </div>
+            {profiles.length > 0 && (
+              <div className="col-md-6">
+                <div className="auth-zine-field">
+                  <label htmlFor="profile">Public page</label>
+                  <select id="profile" className="form-select" value={form.organizerProfileId} onChange={e => set('organizerProfileId', e.target.value)}>
+                    <option value="">Без public page</option>
+                    {profiles.map(p => <option key={p.id} value={p.id}>{p.displayName}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+            {workspaces.length > 0 && (
+              <div className="col-md-6">
+                <div className="auth-zine-field">
+                  <label htmlFor="workspace">Workspace</label>
+                  <select id="workspace" className="form-select" value={form.businessWorkspaceId} onChange={e => set('businessWorkspaceId', e.target.value)}>
+                    <option value="">Без workspace</option>
+                    {workspaces.map(w => <option key={w.id} value={w.id}>{w.displayName}{w.isDefault ? ' (основен)' : ''}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
             <div className="col-12">
               <div className="auth-zine-field">
                 <label htmlFor="description">Описание</label>

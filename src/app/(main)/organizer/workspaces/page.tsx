@@ -39,9 +39,12 @@ export default async function OrganizerWorkspacesPage() {
           <span className="groove-kicker">Организатор</span>
           <h1 className="groove-panel-title">Работни пространства</h1>
         </div>
-        <Link href="/organizer/dashboard" className="groove-button groove-button-paper">
-          <i className="bi bi-arrow-left" /> Табло
-        </Link>
+        <div className="groove-page-actions">
+          <Link href="/organizer/workspaces/edit/new" className="groove-button groove-button-dark"><i className="bi bi-plus-lg" /> Нов</Link>
+          <Link href="/organizer/dashboard" className="groove-button groove-button-paper">
+            <i className="bi bi-arrow-left" /> Табло
+          </Link>
+        </div>
       </div>
 
       <div className="row g-3">
@@ -71,6 +74,14 @@ export default async function OrganizerWorkspacesPage() {
                 <dt>Събития</dt><dd>{workspace.eventsCount}</dd>
                 <dt>Създадено</dt><dd>{format(new Date(workspace.createdAt), 'dd.MM.yyyy')}</dd>
               </dl>
+              <div className="groove-form-actions mt-3">
+                <Link href={`/organizer/workspaces/edit/${workspace.id}`} className="groove-button groove-button-paper groove-button--sm">
+                  <i className="bi bi-pencil" /> Редакция
+                </Link>
+                <Link href="/organizer/profiles/edit/new" className="groove-button groove-button-dark groove-button--sm">
+                  <i className="bi bi-person-badge" /> Public page
+                </Link>
+              </div>
             </article>
           </div>
         ))}

@@ -77,6 +77,7 @@ export interface EventDetails extends EventCard {
   longitude?: number
   organizerId: string
   organizerProfileId?: number
+  businessWorkspaceId?: number
   imageUrls: string[]
   commentsCount: number
   comments: EventComment[]
