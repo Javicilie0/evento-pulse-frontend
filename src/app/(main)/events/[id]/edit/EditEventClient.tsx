@@ -41,6 +41,7 @@ function toLocalInput(value: string) {
 
 interface OrganizerProfile { id: number; displayName: string; isDefault: boolean; businessWorkspaceId?: number }
 interface Workspace { id: number; displayName: string; isDefault: boolean }
+interface VenueLayout { id: number; venueName: string; name: string; seats: number; status: string }
 
 export function EditEventClient({ event }: { event: EventDetails }) {
   const router = useRouter()
@@ -58,10 +59,14 @@ export function EditEventClient({ event }: { event: EventDetails }) {
     recurrenceType: event.isRecurring ? 'Weekly' : 'None',
     recurrenceInterval: '1',
     recurrenceEndDate: '',
+    ticketingMode: event.ticketingMode ?? 'GeneralAdmission',
+    venueLayoutId: (event as any).venueLayoutId ? String((event as any).venueLayoutId) : '',
   })
   const [profiles, setProfiles] = useState<OrganizerProfile[]>([])
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [layouts, setLayouts] = useState<VenueLayout[]>([])
   const [loading, setLoading] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [error, setError] = useState('')
 
   function set(field: string, value: string) {
@@ -80,7 +85,31 @@ export function EditEventClient({ event }: { event: EventDetails }) {
   useEffect(() => {
     api.get<OrganizerProfile[]>('/api/organizer/profiles').then(r => setProfiles(r.data)).catch(() => {})
     api.get<Workspace[]>('/api/organizer/workspaces').then(r => setWorkspaces(r.data)).catch(() => {})
+    api.get<VenueLayout[]>('/api/layouts').then(r => setLayouts(r.data.filter(l => l.status !== 'Archived'))).catch(() => {})
   }, [])
+
+  async function generateDescription() {
+    if (!form.title.trim()) {
+      setError('Въведи заглавие, за да генерирам описание.')
+      return
+    }
+    setAiLoading(true)
+    setError('')
+    try {
+      const res = await api.post('/api/events/generate-description', {
+        title: form.title,
+        city: form.city,
+        genre: form.genre,
+        hints: form.description,
+        lang: 'bg',
+      })
+      set('description', res.data.description)
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'AI описанието не успя.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -97,6 +126,8 @@ export function EditEventClient({ event }: { event: EventDetails }) {
         recurrenceInterval: Number(form.recurrenceInterval || 1),
         recurrenceEndDate: form.recurrenceEndDate || undefined,
         imageUrl: form.imageUrl || undefined,
+        ticketingMode: form.ticketingMode,
+        venueLayoutId: form.venueLayoutId ? Number(form.venueLayoutId) : undefined,
       })
       router.push(`/events/${event.id}`)
       router.refresh()
@@ -189,6 +220,26 @@ export function EditEventClient({ event }: { event: EventDetails }) {
                 </div>
               </div>
             )}
+            <div className="col-md-6">
+              <div className="auth-zine-field">
+                <label htmlFor="ticketingMode">Билети и места</label>
+                <select id="ticketingMode" className="form-select" value={form.ticketingMode} onChange={e => set('ticketingMode', e.target.value)}>
+                  <option value="GeneralAdmission">Свободен вход / общи билети</option>
+                  <option value="SeatedLayout">Seating layout</option>
+                </select>
+              </div>
+            </div>
+            {form.ticketingMode !== 'GeneralAdmission' && (
+              <div className="col-md-6">
+                <div className="auth-zine-field">
+                  <label htmlFor="venueLayoutId">Layout</label>
+                  <select id="venueLayoutId" className="form-select" value={form.venueLayoutId} onChange={e => set('venueLayoutId', e.target.value)} required>
+                    <option value="">Избери layout</option>
+                    {layouts.map(l => <option key={l.id} value={l.id}>{l.venueName} - {l.name} ({l.seats} места)</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
             <div className="col-md-4">
               <div className="auth-zine-field">
                 <label>Повторение</label>
@@ -210,6 +261,9 @@ export function EditEventClient({ event }: { event: EventDetails }) {
                 <label htmlFor="description">Описание</label>
                 <textarea id="description" className="form-control" rows={6} value={form.description} onChange={e => set('description', e.target.value)} maxLength={5000} />
               </div>
+              <button type="button" className="groove-button groove-button-paper mt-2" onClick={generateDescription} disabled={aiLoading}>
+                <i className="bi bi-stars" /> {aiLoading ? 'Генерирам...' : 'AI описание'}
+              </button>
             </div>
           </div>
           <div className="groove-form-actions mt-4">

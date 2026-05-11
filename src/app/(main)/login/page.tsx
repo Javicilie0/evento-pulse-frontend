@@ -57,14 +57,14 @@ function LoginForm() {
             )}
 
             <div className="auth-zine-field">
-              <label htmlFor="email" data-i18n="login.email.label">Имейл</label>
+              <label htmlFor="email" data-i18n="login.email.label">Имейл или потребителско име</label>
               <input
                 id="email"
                 type="text"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="username"
-                placeholder="you@evento.app"
+                placeholder="you@evento.app или username"
                 data-i18n-placeholder="login.email.placeholder"
                 required
               />

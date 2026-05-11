@@ -90,6 +90,7 @@ export interface EventDetails extends EventCard {
   canManageTickets: boolean
   isRecurring: boolean
   ticketingMode: 'GeneralAdmission' | 'Seating'
+  venueLayoutId?: number
   isApproved: boolean
   hasPendingChanges: boolean
   currentUserPinned?: boolean

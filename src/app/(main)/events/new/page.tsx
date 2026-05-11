@@ -24,6 +24,7 @@ const GENRE_LABELS: Record<string, string> = {
 interface OrganizerProfile { id: number; displayName: string; isDefault: boolean; businessWorkspaceId?: number }
 interface Workspace { id: number; displayName: string; isDefault: boolean }
 interface VenueLayout { id: number; venueName: string; name: string; seats: number; status: string }
+interface LayoutTicketSection { sectionId: number; sectionName: string; colorHex: string; seatsCount: number; price: number; requiresAttendeeNames: boolean }
 
 export default function CreateEventPage() {
   const { data: session, status } = useSession()
@@ -31,6 +32,7 @@ export default function CreateEventPage() {
   const [profiles, setProfiles] = useState<OrganizerProfile[]>([])
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [layouts, setLayouts] = useState<VenueLayout[]>([])
+  const [layoutSections, setLayoutSections] = useState<LayoutTicketSection[]>([])
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -110,6 +112,24 @@ export default function CreateEventPage() {
     }
   }
 
+  async function loadLayoutSections(layoutId: string) {
+    set('venueLayoutId', layoutId)
+    if (!layoutId) {
+      setLayoutSections([])
+      return
+    }
+    try {
+      const res = await api.get<LayoutTicketSection[]>(`/api/events/layout-ticket-sections/${layoutId}`)
+      setLayoutSections(res.data)
+    } catch {
+      setLayoutSections([])
+    }
+  }
+
+  function updateLayoutSection(sectionId: number, patch: Partial<LayoutTicketSection>) {
+    setLayoutSections(prev => prev.map(s => s.sectionId === sectionId ? { ...s, ...patch } : s))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -128,6 +148,7 @@ export default function CreateEventPage() {
         imageUrl: form.imageUrl || undefined,
         ticketingMode: form.ticketingMode,
         venueLayoutId: form.venueLayoutId ? Number(form.venueLayoutId) : undefined,
+        layoutTicketSections: form.ticketingMode === 'GeneralAdmission' ? undefined : layoutSections,
       })
       router.push(`/events/${res.data.id}`)
     } catch (err: any) {
@@ -255,11 +276,45 @@ export default function CreateEventPage() {
               <div className="col-md-6">
                 <div className="auth-zine-field">
                   <label htmlFor="venueLayoutId">Layout</label>
-                  <select id="venueLayoutId" className="form-select" value={form.venueLayoutId} onChange={e => set('venueLayoutId', e.target.value)} required>
+                  <select id="venueLayoutId" className="form-select" value={form.venueLayoutId} onChange={e => loadLayoutSections(e.target.value)} required>
                     <option value="">Избери layout</option>
                     {layouts.map(l => <option key={l.id} value={l.id}>{l.venueName} - {l.name} ({l.seats} места)</option>)}
                   </select>
                 </div>
+              </div>
+            )}
+
+            {form.ticketingMode !== 'GeneralAdmission' && layoutSections.length > 0 && (
+              <div className="col-12">
+                <section className="event-layout-ticket-builder">
+                  <div className="event-layout-ticket-builder__head">
+                    <div>
+                      <span className="groove-kicker">Цени по цвят</span>
+                      <h4>Въведи цена за всеки сектор</h4>
+                      <p>Създават се нормални билети автоматично, вързани към местата от layout-а.</p>
+                    </div>
+                    <span>{layoutSections.reduce((sum, s) => sum + s.seatsCount, 0)} места</span>
+                  </div>
+                  <div className="event-layout-ticket-builder__rows">
+                    {layoutSections.map(section => (
+                      <label key={section.sectionId} className="event-layout-ticket-row">
+                        <span className="event-layout-ticket-row__dot" style={{ background: section.colorHex }} />
+                        <span className="event-layout-ticket-row__meta">
+                          <strong>{section.sectionName}</strong>
+                          <small>{section.seatsCount} места</small>
+                        </span>
+                        <span className="event-layout-ticket-row__field">
+                          <small>Цена</small>
+                          <input type="number" step="0.01" min="0" value={section.price} onChange={e => updateLayoutSection(section.sectionId, { price: Number(e.target.value) })} />
+                        </span>
+                        <span className="event-layout-ticket-row__names">
+                          <input type="checkbox" checked={section.requiresAttendeeNames} onChange={e => updateLayoutSection(section.sectionId, { requiresAttendeeNames: e.target.checked })} />
+                          <small>Изисквай имена</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
               </div>
             )}
 
