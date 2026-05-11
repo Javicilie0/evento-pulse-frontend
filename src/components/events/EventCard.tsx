@@ -25,7 +25,6 @@ export function EventCard({ event, canManage }: Props) {
   const [attendance, setAttendance] = useState(event.userAttendanceStatus)
 
   const isToday = new Date(event.startTime).toDateString() === new Date().toDateString()
-  const organizerInitial = event.organizerName?.trim()?.[0]?.toUpperCase() ?? '?'
 
   async function handleLike() {
     if (!isAuthed) return (window.location.href = '/login')
@@ -113,10 +112,12 @@ export function EventCard({ event, canManage }: Props) {
           <span><i className="bi bi-clock" /> {format(new Date(event.startTime), 'dd.MM HH:mm')}</span>
         </div>
 
-        <span className="evt-card__organizer">
-          <span className="evt-card__organizer-avatar">{organizerInitial}</span>
-          <span>{event.organizerName}</span>
-        </span>
+        {event.organizerName && (
+          <Link href={event.organizerProfileId ? `/pages/${event.organizerProfileId}` : `/events/${event.id}`} className="evt-card__organizer">
+            <span className="evt-card__organizer-avatar">{event.organizerName.trim()[0]?.toUpperCase()}</span>
+            <span>{event.organizerName}</span>
+          </Link>
+        )}
 
         {/* Actions */}
         <div className="evt-card__actions">

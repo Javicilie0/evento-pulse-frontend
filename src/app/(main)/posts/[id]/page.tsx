@@ -23,6 +23,7 @@ export default async function PostDetailsPage({ params }: Props) {
   const { id } = await params
   const post = await getPost(id)
   if (!post) return notFound()
+  const authorHref = post.organizerProfileId ? `/pages/${post.organizerProfileId}` : `/posts/${post.id}`
 
   return (
     <section className="groove-app-page social-feed-page">
@@ -34,7 +35,7 @@ export default async function PostDetailsPage({ params }: Props) {
 
       <article className="groove-paper-card social-post-detail">
         <div className="social-post-card__author">
-          <Link href={`/profile/${post.authorId}`} className="social-author-link">
+          <Link href={authorHref} className="social-author-link">
             {post.authorImageUrl ? (
               <img src={mediaUrl(post.authorImageUrl)} alt={post.authorName} className="social-avatar-xs" />
             ) : (

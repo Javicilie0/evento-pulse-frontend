@@ -33,6 +33,7 @@ export interface EventCard {
   latitude?: number
   longitude?: number
   organizerName: string
+  organizerProfileId?: number
   likesCount: number
   savesCount: number
   goingCount: number
@@ -113,6 +114,7 @@ export interface PostComment {
 export interface Post {
   id: number
   authorId: string
+  organizerProfileId?: number
   authorName: string
   authorImageUrl?: string
   content: string

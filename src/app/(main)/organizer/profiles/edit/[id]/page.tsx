@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { MediaUploadField } from '@/components/forms/MediaUploadField'
@@ -48,6 +48,8 @@ export default function OrganizerProfileEditPage({ params }: { params: Promise<{
   const { id } = use(params)
   const isNew = id === 'new'
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const workspaceId = searchParams.get('workspaceId') ?? ''
   const [form, setForm] = useState<ProfileForm>(emptyForm)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [loading, setLoading] = useState(!isNew)
@@ -55,13 +57,16 @@ export default function OrganizerProfileEditPage({ params }: { params: Promise<{
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get<Workspace[]>('/api/organizer/workspaces').then(r => setWorkspaces(r.data)).catch(() => {})
+    api.get<Workspace[]>('/api/organizer/workspaces').then(r => {
+      setWorkspaces(r.data)
+      if (isNew && workspaceId) setForm(prev => ({ ...prev, businessWorkspaceId: workspaceId }))
+    }).catch(() => {})
     if (isNew) return
     api.get<ProfileForm>(`/api/organizer/profiles/${id}`)
       .then(r => setForm({ ...emptyForm, ...r.data, businessWorkspaceId: (r.data as any).businessWorkspaceId ? String((r.data as any).businessWorkspaceId) : '' }))
       .catch(() => setError('Страницата не може да бъде заредена.'))
       .finally(() => setLoading(false))
-  }, [id, isNew])
+  }, [id, isNew, workspaceId])
 
   function set(field: keyof ProfileForm, value: string | boolean) {
     setForm(prev => ({ ...prev, [field]: value }))

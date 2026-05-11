@@ -81,7 +81,6 @@ export default async function HomePage({ searchParams }: Props) {
       startTime: e.startTime,
       genre: e.genre,
       imageUrl: mediaUrl(e.imageUrl),
-      organizerName: e.organizerName,
       lat: e.latitude as number,
       lng: e.longitude as number,
       isApproximate: false,

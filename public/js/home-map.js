@@ -20,7 +20,7 @@
         'ямбол': [42.4842, 26.5035], 'yambol': [42.4842, 26.5035]
     };
 
-    var BG_BOUNDS = { south: 41.2, west: 22.0, north: 44.3, east: 28.8 };
+    var BG_BOUNDS = { south: 41.05, west: 21.55, north: 44.45, east: 29.15 };
     var BG_CENTER = { lat: 42.7339, lng: 25.4858 };
     var BG_ZOOM = 7;
 
@@ -139,7 +139,6 @@
                 '<a class="evt-map-card__title" href="/events/' + encodeURIComponent(m.eventId) + '">' + escapeHtml(m.title) + '</a>' +
                 '<div class="evt-map-card__meta"><i class="bi bi-geo-alt"></i><span>' + escapeHtml(location || m.city || '') + '</span></div>' +
                 '<div class="evt-map-card__meta"><i class="bi bi-clock"></i><span>' + escapeHtml(formatDate(m.startTime)) + '</span></div>' +
-                (m.organizerName ? '<div class="evt-map-card__meta"><i class="bi bi-person-badge"></i><span>' + organizerText + ': ' + escapeHtml(m.organizerName) + '</span></div>' : '') +
                 '<a class="evt-map-card__cta" href="/events/' + encodeURIComponent(m.eventId) + '">' +
                     '<span>' + detailsText + '</span><i class="bi bi-arrow-right"></i>' +
                 '</a>' +
@@ -519,7 +518,11 @@
                 { lat: BG_BOUNDS.south, lng: BG_BOUNDS.west },
                 { lat: BG_BOUNDS.north, lng: BG_BOUNDS.east }
             );
-            map.fitBounds(bgBounds);
+            function fitBulgaria() {
+                google.maps.event.trigger(map, 'resize');
+                map.fitBounds(bgBounds, 18);
+            }
+            fitBulgaria();
 
             // Hide loading overlay as soon as Maps has rendered its canvas
             var loadingOverlay = mapEl.querySelector('.map-loading-state');
@@ -527,14 +530,10 @@
 
             // Fix tiles not covering full container on initial load
             google.maps.event.addListenerOnce(map, 'tilesloaded', function () {
-                var center = map.getCenter();
-                google.maps.event.trigger(map, 'resize');
-                if (center) map.setCenter(center);
+                fitBulgaria();
             });
             setTimeout(function () {
-                var center = map.getCenter();
-                google.maps.event.trigger(map, 'resize');
-                if (center) map.setCenter(center);
+                fitBulgaria();
             }, 400);
 
             var infoWindow = new google.maps.InfoWindow({ maxWidth: 320, disableAutoPan: false });
@@ -546,17 +545,18 @@
             var CLUSTER_DISTANCE_PX = 48;
             window.GrooveHomeMapRefresh = function () {
                 if (!map || !(window.google && window.google.maps)) return;
-                var center = map.getCenter();
-                google.maps.event.trigger(map, 'resize');
-                if (center) map.setCenter(center);
+                if (currentFilter) {
+                    var rendered = renderMarkers(currentFilter);
+                    fitMap(currentFilter, rendered);
+                    return;
+                }
+                fitBulgaria();
             };
             window.GrooveHomeUpdateEvents = function () {
                 if (!map || !(window.google && window.google.maps)) return null;
                 markersData = readHomeEventsData();
                 var result = applyFilter(null);
-                var center = map.getCenter();
-                google.maps.event.trigger(map, 'resize');
-                if (center) map.setCenter(center);
+                fitBulgaria();
                 return result;
             };
 
@@ -856,7 +856,7 @@
                     var c = lookupCityCoords(filter.city);
                     if (c) { map.panTo({ lat: c[0], lng: c[1] }); map.setZoom(12); return; }
                 }
-                map.fitBounds(bgBounds);
+                fitBulgaria();
             }
 
             function applyFilter(filter) {

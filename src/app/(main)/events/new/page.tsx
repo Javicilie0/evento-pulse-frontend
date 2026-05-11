@@ -72,6 +72,15 @@ export default function CreateEventPage() {
     setForm(f => ({ ...f, [field]: value }))
   }
 
+  function setProfile(value: string) {
+    const profile = profiles.find(p => String(p.id) === value)
+    setForm(f => ({
+      ...f,
+      organizerProfileId: value,
+      businessWorkspaceId: profile?.businessWorkspaceId ? String(profile.businessWorkspaceId) : f.businessWorkspaceId,
+    }))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -177,7 +186,7 @@ export default function CreateEventPage() {
                 <div className="auth-zine-field">
                   <label htmlFor="profile">Организаторска страница</label>
                   <select id="profile" className="form-select" value={form.organizerProfileId}
-                    onChange={e => set('organizerProfileId', e.target.value)}>
+                    onChange={e => setProfile(e.target.value)} required>
                     {profiles.map(p => (
                       <option key={p.id} value={p.id}>{p.displayName}{p.isDefault ? ' (по подразбиране)' : ''}</option>
                     ))}

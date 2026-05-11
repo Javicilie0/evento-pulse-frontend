@@ -78,7 +78,7 @@ export default async function OrganizerWorkspacesPage() {
                 <Link href={`/organizer/workspaces/edit/${workspace.id}`} className="groove-button groove-button-paper groove-button--sm">
                   <i className="bi bi-pencil" /> Редакция
                 </Link>
-                <Link href="/organizer/profiles/edit/new" className="groove-button groove-button-dark groove-button--sm">
+                <Link href={`/organizer/profiles/edit/new?workspaceId=${workspace.id}`} className="groove-button groove-button-dark groove-button--sm">
                   <i className="bi bi-person-badge" /> Public page
                 </Link>
               </div>

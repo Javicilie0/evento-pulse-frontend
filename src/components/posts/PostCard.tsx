@@ -26,6 +26,7 @@ export function PostCard({ post }: Props) {
 
   const preview = post.content.length > 220 ? post.content.slice(0, 220) + '...' : post.content
   const initial = (post.authorName?.[0] ?? '?').toUpperCase()
+  const authorHref = post.organizerProfileId ? `/pages/${post.organizerProfileId}` : `/posts/${post.id}`
 
   async function handleLike() {
     if (!isAuthed) return router.push('/login')
@@ -65,7 +66,7 @@ export function PostCard({ post }: Props) {
 
       <div className="card-body d-flex flex-column">
         <div className="social-post-card__author">
-          <Link href={`/profile/${post.authorId}`} className="social-author-link">
+          <Link href={authorHref} className="social-author-link">
             {post.authorImageUrl ? (
               <img src={mediaUrl(post.authorImageUrl)} alt={post.authorName} className="social-avatar-xs" />
             ) : (

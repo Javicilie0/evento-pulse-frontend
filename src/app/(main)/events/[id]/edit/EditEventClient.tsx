@@ -68,6 +68,15 @@ export function EditEventClient({ event }: { event: EventDetails }) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  function setProfile(value: string) {
+    const profile = profiles.find(p => String(p.id) === value)
+    setForm(prev => ({
+      ...prev,
+      organizerProfileId: value,
+      businessWorkspaceId: profile?.businessWorkspaceId ? String(profile.businessWorkspaceId) : prev.businessWorkspaceId,
+    }))
+  }
+
   useEffect(() => {
     api.get<OrganizerProfile[]>('/api/organizer/profiles').then(r => setProfiles(r.data)).catch(() => {})
     api.get<Workspace[]>('/api/organizer/workspaces').then(r => setWorkspaces(r.data)).catch(() => {})
@@ -162,7 +171,7 @@ export function EditEventClient({ event }: { event: EventDetails }) {
               <div className="col-md-6">
                 <div className="auth-zine-field">
                   <label htmlFor="profile">Public page</label>
-                  <select id="profile" className="form-select" value={form.organizerProfileId} onChange={e => set('organizerProfileId', e.target.value)}>
+                  <select id="profile" className="form-select" value={form.organizerProfileId} onChange={e => setProfile(e.target.value)} required>
                     <option value="">Без public page</option>
                     {profiles.map(p => <option key={p.id} value={p.id}>{p.displayName}</option>)}
                   </select>
