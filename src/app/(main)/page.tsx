@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { authenticatedServerApi } from '@/lib/serverApi'
 import { EventCard } from '@/components/events/EventCard'
 import { HomeFilters } from '@/components/home/HomeFilters'
@@ -30,13 +31,114 @@ async function getEvents(params: Record<string, string>) {
   }
 }
 
-export default async function HomePage({ searchParams }: Props) {
-  const sp = await searchParams
-  const page = Number(sp.page ?? 1)
+/* ─────────────────── Skeletons ─────────────────── */
 
+function EventCardSkeleton() {
+  return (
+    <div className="card event-card evt-card" style={{ overflow: 'hidden' }}>
+      <div className="evt-card__media" style={{ background: 'linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 50%,#e5e7eb 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+      <div className="evt-card__body" style={{ gap: 8 }}>
+        <div style={{ height: 14, width: '55%', background: '#e5e7eb', borderRadius: 4, animation: 'shimmer 1.4s infinite' }} />
+        <div style={{ height: 18, width: '80%', background: '#e5e7eb', borderRadius: 4, animation: 'shimmer 1.4s infinite 0.1s' }} />
+        <div style={{ height: 12, width: '45%', background: '#e5e7eb', borderRadius: 4, animation: 'shimmer 1.4s infinite 0.2s' }} />
+        <div style={{ height: 12, width: '35%', background: '#e5e7eb', borderRadius: 4, marginTop: 4, animation: 'shimmer 1.4s infinite 0.3s' }} />
+      </div>
+    </div>
+  )
+}
+
+function EventsGridSkeleton() {
+  return (
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0%   { background-position: 200% 0 }
+          100% { background-position: -200% 0 }
+        }
+      `}</style>
+      <div className="evt-discover">
+        <div className="evt-grid">
+          {Array.from({ length: 8 }).map((_, i) => <EventCardSkeleton key={i} />)}
+        </div>
+        <aside className="evt-trending">
+          <div className="evt-trending__head" style={{ opacity: 0.4 }}>
+            <div style={{ height: 22, width: 80, background: '#e5e7eb', borderRadius: 4, marginBottom: 8 }} />
+            <div style={{ height: 18, width: 140, background: '#e5e7eb', borderRadius: 4, marginBottom: 6 }} />
+            <div style={{ height: 12, width: 180, background: '#e5e7eb', borderRadius: 4 }} />
+          </div>
+        </aside>
+      </div>
+    </>
+  )
+}
+
+function HeroStatsSkeleton() {
+  return (
+    <div className="evt-hero__stats" style={{ opacity: 0.5 }}>
+      {[70, 40, 55].map((w, i) => (
+        <span key={i} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+          <span style={{ display: 'inline-block', height: 22, width: w, background: '#d1d5db', borderRadius: 4 }} />
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/* ─────────────────── Streaming server components ─────────────────── */
+
+async function HeroStatsServer({ sp, page }: { sp: SearchParams; page: number }) {
   const data = await getEvents({
-    page: String(page),
-    pageSize: '12',
+    page: String(page), pageSize: '12',
+    ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
+    ...(sp.city ? { city: sp.city } : {}),
+    ...(sp.genre ? { genre: sp.genre } : {}),
+    ...(sp.dateFrom ? { dateFrom: sp.dateFrom } : {}),
+    ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
+  })
+  const cityCount = new Set(data.items.map(e => e.city)).size
+  const pinCount = data.items.filter(e => e.latitude != null && e.longitude != null).length
+  return (
+    <div className="evt-hero__stats">
+      <span>
+        <strong id="home-total-events-count">{data.totalCount}</strong>{' '}
+        <span data-i18n="home.stats.nights">записани нощи</span>
+      </span>
+      <span>
+        <strong id="home-city-count">{cityCount}</strong>{' '}
+        <span data-i18n="home.stats.cities">града</span>
+      </span>
+      <span>
+        <strong id="home-event-count">{pinCount}</strong>{' '}
+        <span data-i18n="home.stats.pins">карфици</span>
+      </span>
+    </div>
+  )
+}
+
+async function HomeMapServer({ sp, page }: { sp: SearchParams; page: number }) {
+  const data = await getEvents({
+    page: String(page), pageSize: '12',
+    ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
+    ...(sp.city ? { city: sp.city } : {}),
+    ...(sp.genre ? { genre: sp.genre } : {}),
+    ...(sp.dateFrom ? { dateFrom: sp.dateFrom } : {}),
+    ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
+  })
+  const mapMarkers = data.items
+    .filter(e => e.latitude != null && e.longitude != null)
+    .map(e => ({
+      eventId: e.id, title: e.title, city: e.city, address: e.address,
+      startTime: e.startTime, genre: e.genre, imageUrl: mediaUrl(e.imageUrl),
+      lat: e.latitude as number, lng: e.longitude as number, isApproximate: false,
+    }))
+  return <HomeMap markers={mapMarkers} hasMarkers={mapMarkers.length > 0} />
+}
+
+async function EventsContentServer({ sp, page, isTabAll, isTabFree }: {
+  sp: SearchParams; page: number; isTabAll: boolean; isTabFree: boolean
+}) {
+  const data = await getEvents({
+    page: String(page), pageSize: '12',
     ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
     ...(sp.city ? { city: sp.city } : {}),
     ...(sp.genre ? { genre: sp.genre } : {}),
@@ -44,6 +146,90 @@ export default async function HomePage({ searchParams }: Props) {
     ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
   })
 
+  const visibleCount = Math.min(data.totalCount, page * 12)
+  const trendingEvents = [...data.items]
+    .sort((a, b) =>
+      (b.goingCount * 2 + b.interestedCount + b.likesCount + b.savesCount) -
+      (a.goingCount * 2 + a.interestedCount + a.likesCount + a.savesCount)
+    )
+    .slice(0, 4)
+
+  return (
+    <div className="evt-discover">
+      {data.items.length > 0 ? (
+        <>
+          <div id="event-cards-grid" className="evt-grid">
+            {data.items.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+
+          {data.hasMore && (
+            <div className="evt-load-more">
+              <span className="evt-load-more__meta">
+                <span data-i18n="common.showing">Показани</span>{' '}
+                <strong>{visibleCount}</strong> / <strong>{data.totalCount}</strong>
+              </span>
+              <Link
+                scroll={false}
+                href={`/?page=${page + 1}${sp.search ? `&search=${sp.search}` : ''}${sp.genre ? `&genre=${sp.genre}` : ''}${sp.dateFrom ? `&dateFrom=${sp.dateFrom}` : ''}${sp.dateTo ? `&dateTo=${sp.dateTo}` : ''}`}
+                className="evt-btn evt-btn-ghost"
+              >
+                <i className="bi bi-plus-circle" />
+                <span data-i18n="common.show.more">Покажи още</span>
+              </Link>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="evt-empty">
+          <p data-i18n="home.events.emptytext">
+            Все още няма публикувани събития. Когато организаторите добавят такива, те ще се появят тук.
+          </p>
+        </div>
+      )}
+
+      {/* Trending sidebar */}
+      <aside className="evt-trending">
+        <div className="evt-trending__head">
+          <span className="evt-card__chip evt-card__chip--hot" style={{ position: 'static', display: 'inline-block' }}>
+            <i className="bi bi-graph-up-arrow" /> <span data-i18n="home.trending.stamp">Тренд</span>
+          </span>
+          <h3 data-i18n="home.trending.title">Хора следят сега</h3>
+          <p data-i18n="home.trending.sub">Най-нашумелите събития според реакциите.</p>
+        </div>
+        <div className="evt-trending__list">
+          {trendingEvents.length > 0 ? trendingEvents.map((ev, i) => (
+            <Link key={ev.id} href={`/events/${ev.id}`} className="evt-trending__row">
+              {ev.imageUrl ? (
+                <img src={mediaUrl(ev.imageUrl)} alt={ev.title} loading="lazy" decoding="async" />
+              ) : (
+                <span className="evt-trending__placeholder"><i className="bi bi-calendar-event" /></span>
+              )}
+              <div className="evt-trending__body">
+                <strong>{ev.title}</strong>
+                <small>{ev.city} · {format(new Date(ev.startTime), 'dd.MM HH:mm')}</small>
+              </div>
+              <span className="evt-trending__rank">#{i + 1}</span>
+            </Link>
+          )) : (
+            <p className="text-muted small mb-0" data-i18n="home.trending.empty">
+              Все още няма достатъчно реакции.
+            </p>
+          )}
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+/* ─────────────────── Page shell ─────────────────── */
+
+export default async function HomePage({ searchParams }: Props) {
+  const sp = await searchParams
+  const page = Number(sp.page ?? 1)
+
+  // Date calculations — no API needed, renders instantly
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const daysUntilSat = ((6 - today.getDay()) + 7) % 7 || 7
@@ -62,34 +248,10 @@ export default async function HomePage({ searchParams }: Props) {
   const isTabWeek = sp.dateFrom === todayStr && sp.dateTo === endOfWeekStr
   const isTabFree = sp.search === 'free'
 
-  const visibleCount = Math.min(data.totalCount, page * 12)
-
-  const trendingEvents = [...data.items]
-    .sort((a, b) =>
-      (b.goingCount * 2 + b.interestedCount + b.likesCount + b.savesCount) -
-      (a.goingCount * 2 + a.interestedCount + a.likesCount + a.savesCount)
-    )
-    .slice(0, 4)
-
-  const mapMarkers = data.items
-    .filter(e => e.latitude != null && e.longitude != null)
-    .map(e => ({
-      eventId: e.id,
-      title: e.title,
-      city: e.city,
-      address: e.address,
-      startTime: e.startTime,
-      genre: e.genre,
-      imageUrl: mediaUrl(e.imageUrl),
-      lat: e.latitude as number,
-      lng: e.longitude as number,
-      isApproximate: false,
-    }))
-
   return (
     <div className="evt-shell">
 
-      {/* Marquee */}
+      {/* Marquee — instant */}
       <div className="evt-marquee" aria-hidden="true">
         <div className="evt-marquee__track">
           <span data-i18n="marquee.live">★ Живи нощи</span>
@@ -107,7 +269,7 @@ export default async function HomePage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Hero */}
+      {/* Hero — text renders INSTANTLY, stats + map stream in */}
       <section className="evt-hero">
         <div className="evt-hero__copy">
           <h1 className="evt-hero__title" data-i18n-html="home.hero.h1">
@@ -130,24 +292,20 @@ export default async function HomePage({ searchParams }: Props) {
               <span data-i18n="home.openfeed">Поток</span>
             </Link>
           </div>
-          <div className="evt-hero__stats">
-            <span>
-              <strong id="home-total-events-count">{data.totalCount}</strong>{' '}
-              <span data-i18n="home.stats.nights">записани нощи</span>
-            </span>
-            <span>
-              <strong id="home-city-count">{new Set(data.items.map(e => e.city)).size}</strong>{' '}
-              <span data-i18n="home.stats.cities">града</span>
-            </span>
-            <span>
-              <strong id="home-event-count">{mapMarkers.length}</strong>{' '}
-              <span data-i18n="home.stats.pins">карфици</span>
-            </span>
-          </div>
+          {/* Stats stream in — show skeleton while API fetches */}
+          <Suspense fallback={<HeroStatsSkeleton />}>
+            <HeroStatsServer sp={sp} page={page} />
+          </Suspense>
         </div>
 
-        {/* Map */}
-        <HomeMap markers={mapMarkers} hasMarkers={mapMarkers.length > 0} />
+        {/* Map streams in */}
+        <Suspense fallback={
+          <div style={{ flex: 1, minHeight: 280, background: 'linear-gradient(135deg,#e5e7eb,#f3f4f6)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner-border text-primary" style={{ width: '2rem', height: '2rem' }} />
+          </div>
+        }>
+          <HomeMapServer sp={sp} page={page} />
+        </Suspense>
       </section>
 
       {/* Map event preview panel */}
@@ -172,7 +330,7 @@ export default async function HomePage({ searchParams }: Props) {
         </button>
       </div>
 
-      {/* Filter tabs + AI search */}
+      {/* Filter tabs + AI search — renders INSTANTLY (no API) */}
       <div id="home-filter-anchor" className="evt-search-section" data-filter-anchor data-filter-button-label="Филтри">
         <div id="home-filter-tabs" className="evt-search-tabs-bar">
           <Link scroll={false} className={`evt-search-tab-link ${isTabAll ? 'is-active' : ''}`} href="/">
@@ -191,12 +349,10 @@ export default async function HomePage({ searchParams }: Props) {
             <i className="bi bi-ticket-perforated" /> <span data-i18n="chip.free">Безплатни</span>
           </Link>
         </div>
-
-        {/* AI Search — client component */}
         <HomeFilters />
       </div>
 
-      {/* Events section */}
+      {/* Events section — streams in with skeleton */}
       <section id="home-events-surface" className="evt-section" aria-live="polite">
         <div className="evt-section__head">
           <div>
@@ -207,7 +363,7 @@ export default async function HomePage({ searchParams }: Props) {
           </div>
         </div>
 
-        {/* Genre chips */}
+        {/* Genre chips — instant, no API */}
         <div className="evt-toolbar">
           <div className="evt-chips">
             <Link scroll={false} className={`evt-chip ${isTabAll ? 'is-active' : ''}`} href="/" data-i18n="search.tab.all">Всички</Link>
@@ -225,73 +381,10 @@ export default async function HomePage({ searchParams }: Props) {
           </Link>
         </div>
 
-        <div className="evt-discover">
-          {data.items.length > 0 ? (
-            <>
-              <div id="event-cards-grid" className="evt-grid">
-                {data.items.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
-
-              {data.hasMore && (
-                <div className="evt-load-more">
-                  <span className="evt-load-more__meta">
-                    <span data-i18n="common.showing">Показани</span>{' '}
-                    <strong>{visibleCount}</strong> / <strong>{data.totalCount}</strong>
-                  </span>
-                  <Link
-                    scroll={false}
-                    href={`/?page=${page + 1}${sp.search ? `&search=${sp.search}` : ''}${sp.genre ? `&genre=${sp.genre}` : ''}${sp.dateFrom ? `&dateFrom=${sp.dateFrom}` : ''}${sp.dateTo ? `&dateTo=${sp.dateTo}` : ''}`}
-                    className="evt-btn evt-btn-ghost"
-                  >
-                    <i className="bi bi-plus-circle" />
-                    <span data-i18n="common.show.more">Покажи още</span>
-                  </Link>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="evt-empty">
-              <p data-i18n="home.events.emptytext">
-                Все още няма публикувани събития. Когато организаторите добавят такива, те ще се появят тук.
-              </p>
-            </div>
-          )}
-
-          {/* Trending sidebar */}
-          <aside className="evt-trending">
-            <div className="evt-trending__head">
-              <span className="evt-card__chip evt-card__chip--hot" style={{ position: 'static', display: 'inline-block' }}>
-                <i className="bi bi-graph-up-arrow" /> <span data-i18n="home.trending.stamp">Тренд</span>
-              </span>
-              <h3 data-i18n="home.trending.title">Хора следят сега</h3>
-              <p data-i18n="home.trending.sub">Най-нашумелите събития според реакциите.</p>
-            </div>
-            <div className="evt-trending__list">
-              {trendingEvents.length > 0 ? trendingEvents.map((ev, i) => (
-                <Link key={ev.id} href={`/events/${ev.id}`} className="evt-trending__row">
-                  {ev.imageUrl ? (
-                    <img src={mediaUrl(ev.imageUrl)} alt={ev.title} loading="lazy" decoding="async" />
-                  ) : (
-                    <span className="evt-trending__placeholder">
-                      <i className="bi bi-calendar-event" />
-                    </span>
-                  )}
-                  <div className="evt-trending__body">
-                    <strong>{ev.title}</strong>
-                    <small>{ev.city} · {format(new Date(ev.startTime), 'dd.MM HH:mm')}</small>
-                  </div>
-                  <span className="evt-trending__rank">#{i + 1}</span>
-                </Link>
-              )) : (
-                <p className="text-muted small mb-0" data-i18n="home.trending.empty">
-                  Все още няма достатъчно реакции.
-                </p>
-              )}
-            </div>
-          </aside>
-        </div>
+        {/* Events grid — streams in */}
+        <Suspense fallback={<EventsGridSkeleton />}>
+          <EventsContentServer sp={sp} page={page} isTabAll={isTabAll} isTabFree={isTabFree} />
+        </Suspense>
       </section>
     </div>
   )
