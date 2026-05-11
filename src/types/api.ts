@@ -56,7 +56,7 @@ export interface EventComment {
 }
 
 export interface TicketOption {
-  id: number
+  id: string
   name: string
   price: number
   currency: string

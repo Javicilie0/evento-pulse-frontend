@@ -65,7 +65,7 @@ export function PostCard({ post }: Props) {
 
       <div className="card-body d-flex flex-column">
         <div className="social-post-card__author">
-          <Link href={`/profiles/${post.authorId}`} className="social-author-link">
+          <Link href={`/profile/${post.authorId}`} className="social-author-link">
             {post.authorImageUrl ? (
               <img src={mediaUrl(post.authorImageUrl)} alt={post.authorName} className="social-avatar-xs" />
             ) : (

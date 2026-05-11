@@ -171,8 +171,8 @@ export function EventDetailsClient({ event: initial }: Props) {
             <dd>{format(new Date(initial.endTime), 'dd.MM.yyyy HH:mm')}</dd>
             <dt data-i18n="profile.public.page">Публична страница</dt>
             <dd>
-              {initial.organizerProfileId ? (
-                <Link href={`/profiles/${initial.organizerProfileId}`} className="groove-link">
+              {initial.organizerId ? (
+                <Link href={`/profile/${initial.organizerId}`} className="groove-link">
                   <i className="bi bi-person-badge" /> {initial.organizerName}
                 </Link>
               ) : (
