@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="x-app-lang" content="bg" />
-        <link rel="icon" href="/img/logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/img/img/logo.svg" type="image/svg+xml" />
 
         <link
           rel="stylesheet"

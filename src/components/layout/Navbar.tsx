@@ -31,7 +31,7 @@ export function Navbar() {
       <nav className="navbar navbar-expand-md navbar-dark border-bottom shadow-sm site-navbar">
         <div className="container-fluid">
           <Link className="navbar-brand fw-bold d-inline-flex align-items-center gap-2 site-brand" href="/">
-            <img src="/img/logo.svg" alt="Evento" className="site-brand__logo" />
+            <img src="/img/img/logo.svg" alt="Evento" className="site-brand__logo" width={45} height={34} decoding="async" />
             <span className="site-brand__name notranslate" translate="no">Evento</span>
           </Link>
 
