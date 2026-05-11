@@ -36,9 +36,9 @@ export function HomeFilters() {
       if (data.dateFrom) params.set('dateFrom', data.dateFrom)
       if (data.dateTo) params.set('dateTo', data.dateTo)
       const qs = params.toString()
-      router.push(qs ? `/?${qs}` : '/')
+      router.push(qs ? `/?${qs}` : '/', { scroll: false })
     } catch {
-      router.push(`/?search=${encodeURIComponent(q)}`)
+      router.push(`/?search=${encodeURIComponent(q)}`, { scroll: false })
     } finally {
       setLoading(false)
     }

@@ -175,19 +175,19 @@ export default async function HomePage({ searchParams }: Props) {
       {/* Filter tabs + AI search */}
       <div id="home-filter-anchor" className="evt-search-section" data-filter-anchor data-filter-button-label="Филтри">
         <div id="home-filter-tabs" className="evt-search-tabs-bar">
-          <Link className={`evt-search-tab-link ${isTabAll ? 'is-active' : ''}`} href="/">
+          <Link scroll={false} className={`evt-search-tab-link ${isTabAll ? 'is-active' : ''}`} href="/">
             <i className="bi bi-grid-3x3-gap" /> <span data-i18n="search.tab.all">Всички</span>
           </Link>
-          <Link className={`evt-search-tab-link ${isTabTonight ? 'is-active' : ''}`} href={`/?dateFrom=${todayStr}&dateTo=${todayStr}`}>
+          <Link scroll={false} className={`evt-search-tab-link ${isTabTonight ? 'is-active' : ''}`} href={`/?dateFrom=${todayStr}&dateTo=${todayStr}`}>
             <i className="bi bi-calendar-day" /> <span data-i18n="search.tab.tonight">Днес</span>
           </Link>
-          <Link className={`evt-search-tab-link ${isTabWeekend ? 'is-active' : ''}`} href={`/?dateFrom=${nextSatStr}&dateTo=${nextSunStr}`}>
+          <Link scroll={false} className={`evt-search-tab-link ${isTabWeekend ? 'is-active' : ''}`} href={`/?dateFrom=${nextSatStr}&dateTo=${nextSunStr}`}>
             <i className="bi bi-stars" /> <span data-i18n="search.tab.weekend">Уикенд</span>
           </Link>
-          <Link className={`evt-search-tab-link ${isTabWeek ? 'is-active' : ''}`} href={`/?dateFrom=${todayStr}&dateTo=${endOfWeekStr}`}>
+          <Link scroll={false} className={`evt-search-tab-link ${isTabWeek ? 'is-active' : ''}`} href={`/?dateFrom=${todayStr}&dateTo=${endOfWeekStr}`}>
             <i className="bi bi-calendar-week" /> <span data-i18n="search.tab.week">Тази седмица</span>
           </Link>
-          <Link className={`evt-search-tab-link ${isTabFree ? 'is-active' : ''}`} href="/?search=free">
+          <Link scroll={false} className={`evt-search-tab-link ${isTabFree ? 'is-active' : ''}`} href="/?search=free">
             <i className="bi bi-ticket-perforated" /> <span data-i18n="chip.free">Безплатни</span>
           </Link>
         </div>
@@ -210,15 +210,15 @@ export default async function HomePage({ searchParams }: Props) {
         {/* Genre chips */}
         <div className="evt-toolbar">
           <div className="evt-chips">
-            <Link className={`evt-chip ${isTabAll ? 'is-active' : ''}`} href="/" data-i18n="search.tab.all">Всички</Link>
-            <Link className={`evt-chip ${sp.genre === 'LiveMusic' ? 'is-active' : ''}`} href="/?genre=LiveMusic" data-i18n="genre.LiveMusic">Live музика</Link>
-            <Link className={`evt-chip ${sp.genre === 'Festival' ? 'is-active' : ''}`} href="/?genre=Festival" data-i18n="genre.Festival">Фестивал</Link>
-            <Link className={`evt-chip ${sp.genre === 'Theater' ? 'is-active' : ''}`} href="/?genre=Theater" data-i18n="genre.Theater">Театър</Link>
-            <Link className={`evt-chip ${isTabFree ? 'is-active' : ''}`} href="/?search=free" data-i18n="chip.free">Безплатни</Link>
-            <Link className={`evt-chip ${sp.genre === 'Kids' ? 'is-active' : ''}`} href="/?genre=Kids" data-i18n="genre.Kids">За деца</Link>
-            <Link className={`evt-chip ${sp.genre === 'Techno' ? 'is-active' : ''}`} href="/?genre=Techno" data-i18n="genre.Techno">Techno</Link>
-            <Link className={`evt-chip ${sp.genre === 'House' ? 'is-active' : ''}`} href="/?genre=House" data-i18n="genre.House">House</Link>
-            <Link className={`evt-chip ${sp.genre === 'Jazz' ? 'is-active' : ''}`} href="/?genre=Jazz" data-i18n="genre.Jazz">Jazz</Link>
+            <Link scroll={false} className={`evt-chip ${isTabAll ? 'is-active' : ''}`} href="/" data-i18n="search.tab.all">Всички</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'LiveMusic' ? 'is-active' : ''}`} href="/?genre=LiveMusic" data-i18n="genre.LiveMusic">Live музика</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'Festival' ? 'is-active' : ''}`} href="/?genre=Festival" data-i18n="genre.Festival">Фестивал</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'Theater' ? 'is-active' : ''}`} href="/?genre=Theater" data-i18n="genre.Theater">Театър</Link>
+            <Link scroll={false} className={`evt-chip ${isTabFree ? 'is-active' : ''}`} href="/?search=free" data-i18n="chip.free">Безплатни</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'Kids' ? 'is-active' : ''}`} href="/?genre=Kids" data-i18n="genre.Kids">За деца</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'Techno' ? 'is-active' : ''}`} href="/?genre=Techno" data-i18n="genre.Techno">Techno</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'House' ? 'is-active' : ''}`} href="/?genre=House" data-i18n="genre.House">House</Link>
+            <Link scroll={false} className={`evt-chip ${sp.genre === 'Jazz' ? 'is-active' : ''}`} href="/?genre=Jazz" data-i18n="genre.Jazz">Jazz</Link>
           </div>
           <Link href="/events/new" className="evt-btn evt-btn-primary" style={{ padding: '8px 16px' }}>
             <i className="bi bi-plus-lg" /> <span data-i18n="home.events.create">Създай събитие</span>
@@ -241,6 +241,7 @@ export default async function HomePage({ searchParams }: Props) {
                     <strong>{visibleCount}</strong> / <strong>{data.totalCount}</strong>
                   </span>
                   <Link
+                    scroll={false}
                     href={`/?page=${page + 1}${sp.search ? `&search=${sp.search}` : ''}${sp.genre ? `&genre=${sp.genre}` : ''}${sp.dateFrom ? `&dateFrom=${sp.dateFrom}` : ''}${sp.dateTo ? `&dateTo=${sp.dateTo}` : ''}`}
                     className="evt-btn evt-btn-ghost"
                   >

@@ -121,9 +121,10 @@ export default async function EventsPage({ searchParams }: Props) {
 
       {/* Genre chips */}
       <div className="evt-chips mb-4">
-        <Link className={`evt-chip ${!sp.genre ? 'is-active' : ''}`} href="/events" data-i18n="search.tab.all">Всички</Link>
+        <Link scroll={false} className={`evt-chip ${!sp.genre ? 'is-active' : ''}`} href="/events" data-i18n="search.tab.all">Всички</Link>
         {GENRES.map(g => (
           <Link
+            scroll={false}
             key={g.value}
             className={`evt-chip ${sp.genre === g.value ? 'is-active' : ''}`}
             href={buildHref({ genre: g.value, page: undefined })}
@@ -163,12 +164,12 @@ export default async function EventsPage({ searchParams }: Props) {
               </span>
               <div className="d-flex gap-2">
                 {page > 1 && (
-                  <Link href={buildHref({ page: String(page - 1) })} className="groove-button groove-button-paper">
+                  <Link scroll={false} href={buildHref({ page: String(page - 1) })} className="groove-button groove-button-paper">
                     <i className="bi bi-arrow-left" /> <span>Предишна</span>
                   </Link>
                 )}
                 {data.hasMore && (
-                  <Link href={buildHref({ page: String(page + 1) })} className="groove-button groove-button-dark">
+                  <Link scroll={false} href={buildHref({ page: String(page + 1) })} className="groove-button groove-button-dark">
                     <i className="bi bi-plus-circle" /> <span data-i18n="common.show.more">Покажи още</span>
                   </Link>
                 )}
