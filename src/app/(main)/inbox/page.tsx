@@ -1,5 +1,6 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import type { Conversation } from '@/types/api'
 
@@ -12,7 +13,17 @@ async function getConversations(): Promise<Conversation[]> {
   }
 }
 
-export default async function InboxPage() {
+export default async function InboxPage({ searchParams }: { searchParams?: Promise<{ userId?: string }> }) {
+  const sp = searchParams ? await searchParams : undefined
+  if (sp?.userId) {
+    try {
+      const res = await (await authenticatedServerApi()).post<{ token: string }>('/api/messages/conversations', { userId: sp.userId })
+      redirect(`/inbox/${res.data.token}`)
+    } catch {
+      redirect('/inbox')
+    }
+  }
+
   const conversations = await getConversations()
 
   return (
