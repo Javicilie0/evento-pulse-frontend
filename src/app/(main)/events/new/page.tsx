@@ -40,6 +40,10 @@ export default function CreateEventPage() {
     imageUrl: '',
     businessWorkspaceId: '',
     organizerProfileId: '',
+    recurrenceType: 'None',
+    recurrenceInterval: '1',
+    recurrenceStartDate: '',
+    recurrenceEndDate: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -79,6 +83,10 @@ export default function CreateEventPage() {
         endTime: new Date(form.endTime).toISOString(),
         organizerProfileId: form.organizerProfileId ? Number(form.organizerProfileId) : undefined,
         businessWorkspaceId: form.businessWorkspaceId ? Number(form.businessWorkspaceId) : undefined,
+        recurrenceType: form.recurrenceType,
+        recurrenceInterval: Number(form.recurrenceInterval || 1),
+        recurrenceStartDate: form.recurrenceStartDate || undefined,
+        recurrenceEndDate: form.recurrenceEndDate || undefined,
         imageUrl: form.imageUrl || undefined,
       })
       router.push(`/events/${res.data.id}`)
@@ -196,6 +204,23 @@ export default function CreateEventPage() {
             <div className="col-12">
               <MediaUploadField label="Снимка" folder="events" value={form.imageUrl} onChange={url => set('imageUrl', url)} />
             </div>
+
+            <div className="col-md-4">
+              <div className="auth-zine-field">
+                <label htmlFor="recurrenceType">Повторение</label>
+                <select id="recurrenceType" className="form-select" value={form.recurrenceType} onChange={e => set('recurrenceType', e.target.value)}>
+                  <option value="None">Еднократно</option>
+                  <option value="Daily">Всеки ден</option>
+                  <option value="Weekly">Всяка седмица</option>
+                </select>
+              </div>
+            </div>
+            {form.recurrenceType !== 'None' && (
+              <>
+                <div className="col-md-4"><div className="auth-zine-field"><label>Интервал</label><input type="number" min="1" max="365" className="form-control" value={form.recurrenceInterval} onChange={e => set('recurrenceInterval', e.target.value)} /></div></div>
+                <div className="col-md-4"><div className="auth-zine-field"><label>Край на серията</label><input type="date" className="form-control" value={form.recurrenceEndDate} onChange={e => set('recurrenceEndDate', e.target.value)} /></div></div>
+              </>
+            )}
 
             <div className="col-12">
               <div className="auth-zine-field">

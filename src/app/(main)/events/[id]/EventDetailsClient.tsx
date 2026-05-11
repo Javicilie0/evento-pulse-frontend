@@ -25,6 +25,7 @@ export function EventDetailsClient({ event: initial }: Props) {
   const [interested, setInterested] = useState(initial.interestedCount)
   const [attendance, setAttendance] = useState(initial.userAttendanceStatus)
   const [comments, setComments] = useState<EventComment[]>(initial.comments)
+  const [occurrences, setOccurrences] = useState(initial.occurrences)
   const [commentText, setCommentText] = useState('')
   const [commentLoading, setCommentLoading] = useState(false)
 
@@ -98,6 +99,12 @@ export function EventDetailsClient({ event: initial }: Props) {
       await api.delete(`/api/events/${initial.id}/comments/${commentId}`)
       setComments(prev => prev.filter(c => c.id !== commentId))
     } catch {}
+  }
+
+  async function cancelOccurrence(id: number) {
+    if (!confirm('Да отменя ли тази дата?')) return
+    await api.post(`/api/event-series/occurrences/${id}/cancel`)
+    setOccurrences(prev => prev.map(o => o.id === id ? { ...o, status: 'Cancelled', isAvailable: false } : o))
   }
 
   return (
@@ -259,7 +266,7 @@ export function EventDetailsClient({ event: initial }: Props) {
       </div>
 
       {/* Occurrences */}
-      {initial.isRecurring && initial.occurrences.length > 0 && (
+      {initial.isRecurring && occurrences.length > 0 && (
         <section className="groove-page-section event-occurrence-selector">
           <div className="groove-section-bar">
             <div>
@@ -269,15 +276,16 @@ export function EventDetailsClient({ event: initial }: Props) {
           </div>
           <div className="groove-info-card event-occurrence-card">
             <div className="event-occurrence-pills" aria-label="Избор на дата">
-              {initial.occurrences.slice(0, 8).map(occ => (
-                <Link
-                  key={occ.id}
-                  href={`/events/${initial.id}?occurrenceId=${occ.id}`}
-                  className={`event-occurrence-pill ${occ.status === 'Cancelled' ? 'is-cancelled' : occ.status === 'SoldOut' ? 'is-soldout' : ''}`}
-                >
-                  <span>{format(new Date(occ.startDateTime), 'EEE, dd.MM')}</span>
-                  <strong>{format(new Date(occ.startDateTime), 'HH:mm')}</strong>
-                </Link>
+              {occurrences.slice(0, 8).map(occ => (
+                <span key={occ.id} className={`event-occurrence-pill ${occ.status === 'Cancelled' ? 'is-cancelled' : occ.status === 'SoldOut' ? 'is-soldout' : ''}`}>
+                  <Link href={`/events/${initial.id}?occurrenceId=${occ.id}`}>
+                    <span>{format(new Date(occ.startDateTime), 'EEE, dd.MM')}</span>
+                    <strong>{format(new Date(occ.startDateTime), 'HH:mm')}</strong>
+                  </Link>
+                  {initial.canManageTickets && occ.status !== 'Cancelled' && (
+                    <button type="button" className="btn btn-sm btn-link text-danger p-0" onClick={() => cancelOccurrence(occ.id)}>Отмени</button>
+                  )}
+                </span>
               ))}
             </div>
           </div>
