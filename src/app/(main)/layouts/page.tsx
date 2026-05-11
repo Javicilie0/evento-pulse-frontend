@@ -30,9 +30,12 @@ export default async function LayoutsPage() {
           <h1 className="groove-panel-title">Схеми на зали</h1>
           <p className="groove-panel-intro mb-0">Списък със seating layout-и, които могат да се закачат към събития.</p>
         </div>
-        <Link href="/organizer/dashboard" className="groove-button groove-button-paper">
-          <i className="bi bi-arrow-left" /> Табло
-        </Link>
+        <div className="groove-page-actions">
+          <Link href="/layouts/editor" className="groove-button groove-button-dark"><i className="bi bi-plus-lg" /> Нова</Link>
+          <Link href="/organizer/dashboard" className="groove-button groove-button-paper">
+            <i className="bi bi-arrow-left" /> Табло
+          </Link>
+        </div>
       </div>
 
       <div className="groove-paper-card">
@@ -50,7 +53,7 @@ export default async function LayoutsPage() {
                 {layouts.map(layout => (
                   <tr key={layout.id}>
                     <td>{layout.venueName}</td>
-                    <td><strong>{layout.name}</strong></td>
+                    <td><Link href={`/layouts/editor?id=${layout.id}`}><strong>{layout.name}</strong></Link></td>
                     <td>v{layout.version}</td>
                     <td>{layout.seats}</td>
                     <td><span className="badge bg-secondary">{layout.status}</span></td>

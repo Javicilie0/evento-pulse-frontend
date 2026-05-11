@@ -72,6 +72,9 @@ export default async function OrganizerProfilesPage() {
                   <span className="badge bg-secondary">{profile.postsCount} поста</span>
                 </div>
                 <div className="groove-form-actions mt-3">
+                  <Link href={`/pages/${profile.id}`} className="groove-button groove-button-dark groove-button--sm">
+                    <i className="bi bi-eye" /> Виж
+                  </Link>
                   <Link href={`/organizer/profiles/edit/${profile.id}`} className="groove-button groove-button-paper groove-button--sm">
                     <i className="bi bi-pencil" /> Редакция
                   </Link>

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 const GENRES = [
   'LiveMusic', 'Festival', 'Theater', 'Exhibition', 'Sport',
@@ -193,11 +194,7 @@ export default function CreateEventPage() {
             )}
 
             <div className="col-12">
-              <div className="auth-zine-field">
-                <label htmlFor="imageUrl">URL на снимка</label>
-                <input id="imageUrl" type="url" className="form-control" value={form.imageUrl}
-                  onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
-              </div>
+              <MediaUploadField label="Снимка" folder="events" value={form.imageUrl} onChange={url => set('imageUrl', url)} />
             </div>
 
             <div className="col-12">

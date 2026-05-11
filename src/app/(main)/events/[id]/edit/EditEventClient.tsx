@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import type { EventDetails } from '@/types/api'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 const GENRES = [
   'LiveMusic', 'Festival', 'Theater', 'Exhibition', 'Sport',
@@ -149,10 +150,7 @@ export function EditEventClient({ event }: { event: EventDetails }) {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="auth-zine-field">
-                <label htmlFor="imageUrl">URL на снимка</label>
-                <input id="imageUrl" type="url" className="form-control" value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
-              </div>
+              <MediaUploadField label="Снимка" folder="events" value={form.imageUrl} onChange={url => set('imageUrl', url)} />
             </div>
             {profiles.length > 0 && (
               <div className="col-md-6">

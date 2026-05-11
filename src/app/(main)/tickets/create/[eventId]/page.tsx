@@ -4,6 +4,7 @@ import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 export default function CreateTicketPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = use(params)
@@ -91,10 +92,7 @@ export default function CreateTicketPage({ params }: { params: Promise<{ eventId
               </div>
             </div>
             <div className="col-12">
-              <div className="auth-zine-field">
-                <label htmlFor="imageUrl">URL на снимка</label>
-                <input id="imageUrl" type="url" className="form-control" value={form.imageUrl} onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
-              </div>
+              <MediaUploadField label="Снимка на билет" folder="tickets" value={form.imageUrl} onChange={url => set('imageUrl', url)} />
             </div>
             <div className="col-md-6">
               <label className="d-flex align-items-center gap-2">

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 interface TicketForm {
   id: string
@@ -78,7 +79,7 @@ export default function EditTicketPage({ params }: { params: Promise<{ id: strin
               <div className="col-md-6"><div className="auth-zine-field"><label>Цена</label><input type="number" min="0" step="0.01" className="form-control" value={ticket.price} onChange={e => set('price', Number(e.target.value))} /></div></div>
               <div className="col-md-6"><div className="auth-zine-field"><label>Количество</label><input type="number" min="0" className="form-control" value={ticket.quantityTotal} onChange={e => set('quantityTotal', Number(e.target.value))} /></div></div>
               <div className="col-12"><div className="auth-zine-field"><label>Описание</label><textarea className="form-control" rows={4} value={ticket.description ?? ''} onChange={e => set('description', e.target.value)} /></div></div>
-              <div className="col-12"><div className="auth-zine-field"><label>URL на снимка</label><input className="form-control" value={ticket.imageUrl ?? ''} onChange={e => set('imageUrl', e.target.value)} /></div></div>
+              <div className="col-12"><MediaUploadField label="Снимка на билет" folder="tickets" value={ticket.imageUrl ?? ''} onChange={url => set('imageUrl', url)} /></div>
               <div className="col-md-6"><label className="d-flex gap-2"><input type="checkbox" checked={ticket.isActive} onChange={e => set('isActive', e.target.checked)} /> Активен</label></div>
               <div className="col-md-6"><label className="d-flex gap-2"><input type="checkbox" checked={ticket.requiresAttendeeNames} onChange={e => set('requiresAttendeeNames', e.target.checked)} /> Имена на посетители</label></div>
             </div>

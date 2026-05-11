@@ -65,6 +65,7 @@ function AdminEventsInner() {
         <div className="groove-page-actions">
           <Link href="/admin/events" className={`groove-button ${!pendingOnly ? 'groove-button-dark' : 'groove-button-paper'}`}>Всички</Link>
           <Link href="/admin/events?pending=true" className={`groove-button ${pendingOnly ? 'groove-button-dark' : 'groove-button-paper'}`}>Чакащи</Link>
+          <Link href="/admin/event-changes" className="groove-button groove-button-paper">Промени</Link>
           <Link href="/admin" className="groove-button groove-button-paper"><i className="bi bi-arrow-left" /> Табло</Link>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 interface ProfileForm {
   displayName: string
@@ -108,8 +109,8 @@ export default function OrganizerProfileEditPage({ params }: { params: Promise<{
               <Field label="Сайт" value={form.website} onChange={v => set('website', v)} />
               <Field label="Телефон" value={form.phoneNumber} onChange={v => set('phoneNumber', v)} />
               <Field label="Контактен имейл" value={form.contactEmail} onChange={v => set('contactEmail', v)} />
-              <Field label="Avatar URL" value={form.avatarImageUrl} onChange={v => set('avatarImageUrl', v)} />
-              <Field label="Cover URL" value={form.coverImageUrl} onChange={v => set('coverImageUrl', v)} />
+              <div className="col-md-6"><MediaUploadField label="Avatar" folder="organizers" value={form.avatarImageUrl} onChange={v => set('avatarImageUrl', v)} /></div>
+              <div className="col-md-6"><MediaUploadField label="Cover" folder="organizers" value={form.coverImageUrl} onChange={v => set('coverImageUrl', v)} /></div>
               <Field label="Instagram" value={form.instagramUrl} onChange={v => set('instagramUrl', v)} />
               <Field label="Facebook" value={form.facebookUrl} onChange={v => set('facebookUrl', v)} />
               <Field label="TikTok" value={form.tikTokUrl} onChange={v => set('tikTokUrl', v)} />
