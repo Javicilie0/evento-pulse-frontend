@@ -28,6 +28,7 @@ export default function OrganizerEventsPage() {
   const router = useRouter()
   const [events, setEvents] = useState<OrganizerEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/login'); return }
@@ -39,6 +40,7 @@ export default function OrganizerEventsPage() {
     }
     api.get<OrganizerEvent[]>('/api/organizer/events')
       .then(r => setEvents(r.data))
+      .catch(() => setError('Събитията на организатора не можаха да се заредят.'))
       .finally(() => setLoading(false))
   }, [status, session, router])
 
@@ -46,6 +48,19 @@ export default function OrganizerEventsPage() {
     return (
       <section className="groove-app-page">
         <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="groove-app-page">
+        <div className="groove-empty-card">
+          <i className="bi bi-calendar-x" />
+          <h1 className="groove-panel-title">Моите събития</h1>
+          <p className="groove-panel-intro">{error}</p>
+          <a href="/organizer/dashboard" className="groove-button groove-button-paper mt-3">Назад към таблото</a>
+        </div>
       </section>
     )
   }

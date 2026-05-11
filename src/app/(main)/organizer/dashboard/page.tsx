@@ -31,6 +31,7 @@ export default function OrganizerDashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/login'); return }
@@ -42,14 +43,39 @@ export default function OrganizerDashboardPage() {
     }
     api.get<DashboardData>('/api/organizer/dashboard')
       .then(r => setData(r.data))
-      .catch(() => router.push('/'))
+      .catch(err => {
+        const statusCode = err?.response?.status
+        setError(statusCode === 404
+          ? 'Нямаш създаден организаторски профил към този акаунт.'
+          : 'Организаторското табло не можа да се зареди.')
+      })
       .finally(() => setLoading(false))
   }, [status, session, router])
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <section className="groove-app-page">
         <div className="text-center py-5"><div className="spinner-border text-primary" /></div>
+      </section>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <section className="groove-app-page">
+        <div className="groove-empty-card">
+          <i className="bi bi-person-badge" />
+          <h1 className="groove-panel-title">Организаторско табло</h1>
+          <p className="groove-panel-intro">{error ?? 'Няма данни за организатор.'}</p>
+          <div className="groove-form-actions justify-content-center">
+            <a href="/account/apply" className="groove-button groove-button-dark">
+              <i className="bi bi-send" /> <span>Кандидатствай като организатор</span>
+            </a>
+            <a href="/admin" className="groove-button groove-button-paper">
+              <i className="bi bi-shield-check" /> <span>Админ панел</span>
+            </a>
+          </div>
+        </div>
       </section>
     )
   }
