@@ -326,8 +326,9 @@ export function EventDetailsClient({ event: initial }: Props) {
                   {isAuthed ? (
                     <form onSubmit={async (e) => {
                       e.preventDefault()
+                      const quantity = Number(new FormData(e.currentTarget).get('quantity') ?? 1)
                       try {
-                        await api.post(`/api/tickets/${t.id}/buy`, { quantity: 1 })
+                        await api.post(`/api/tickets/${t.id}/buy`, { quantity })
                         router.push('/tickets')
                       } catch {}
                     }}>
