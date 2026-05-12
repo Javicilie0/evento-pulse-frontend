@@ -1,55 +1,170 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { api } from '@/lib/api'
 import type { Conversation } from '@/types/api'
 
-function ConversationRow({ conversation }: { conversation: Conversation }) {
+const SWIPE_THRESHOLD = 72 // px to reveal delete
+
+function ConversationRow({
+  conversation,
+  onDelete,
+}: {
+  conversation: Conversation
+  onDelete: (token: string) => void
+}) {
   const initial = (conversation.otherUserName?.[0] ?? '?').toUpperCase()
   const scope = conversation.isPageConversation
     ? conversation.currentUserOwnsPage
       ? `Page inbox: ${conversation.pageName ?? ''}`
       : `To page: ${conversation.pageName ?? ''}`
     : conversation.status === 'Pending'
-      ? 'Message request'
-      : 'Personal'
+    ? 'Message request'
+    : 'Personal'
+
+  const startXRef = useRef<number | null>(null)
+  const [offsetX, setOffsetX] = useState(0)
+  const [swiped, setSwiped] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  function onTouchStart(e: React.TouchEvent) {
+    startXRef.current = e.touches[0].clientX
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (startXRef.current === null) return
+    const delta = startXRef.current - e.touches[0].clientX
+    if (delta > 0) {
+      setOffsetX(Math.min(delta, SWIPE_THRESHOLD + 20))
+    }
+  }
+
+  function onTouchEnd() {
+    if (offsetX >= SWIPE_THRESHOLD) {
+      setOffsetX(SWIPE_THRESHOLD)
+      setSwiped(true)
+    } else {
+      setOffsetX(0)
+      setSwiped(false)
+    }
+    startXRef.current = null
+  }
+
+  function cancel() {
+    setOffsetX(0)
+    setSwiped(false)
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      await api.delete(`/api/messages/conversations/${conversation.token}`)
+      onDelete(conversation.token)
+    } catch {
+      setDeleting(false)
+      cancel()
+    }
+  }
 
   return (
-    <Link
-      href={`/inbox/${conversation.token}`}
-      className={`social-conversation-row ${conversation.isIncomingRequest ? 'is-request' : ''}`}
-      data-conversation-row
-      data-list-key={conversation.listKey ?? 'personal'}
-      data-page-name={conversation.pageName ?? ''}
-    >
-      {conversation.otherUserImageUrl ? (
-        <img src={conversation.otherUserImageUrl} alt={conversation.otherUserName} />
-      ) : (
-        <span className="social-conversation-row__fallback">{initial}</span>
-      )}
-      <div>
-        <strong data-conversation-name>{conversation.otherUserName}</strong>
-        <small data-conversation-last>
-          <span>{scope}</span>
-          {conversation.lastMessage ? <span> - {conversation.lastMessage}</span> : null}
-        </small>
+    <div style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Red delete backdrop */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: '#ef4444',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingRight: 16,
+          borderRadius: 8,
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#fff',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+          }}
+        >
+          {deleting
+            ? <span className="spinner-border spinner-border-sm text-white" />
+            : <i className="bi bi-trash" style={{ fontSize: '1.2rem' }} />}
+          Изтрий
+        </button>
       </div>
-      {conversation.lastMessageAt && <time data-conversation-time>{format(new Date(conversation.lastMessageAt), 'dd.MM HH:mm')}</time>}
-      {conversation.unreadCount > 0 && <b data-conversation-badge>{conversation.unreadCount}</b>}
-    </Link>
+
+      {/* Row — slides left to reveal delete */}
+      <div
+        style={{
+          transform: `translateX(-${offsetX}px)`,
+          transition: offsetX === 0 || offsetX === SWIPE_THRESHOLD ? 'transform 0.2s ease' : 'none',
+          position: 'relative',
+          background: 'var(--bs-body-bg, #fff)',
+          borderRadius: 8,
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={swiped ? cancel : undefined}
+      >
+        <Link
+          href={swiped ? '#' : `/inbox/${conversation.token}`}
+          onClick={swiped ? e => { e.preventDefault(); cancel() } : undefined}
+          className={`social-conversation-row ${conversation.isIncomingRequest ? 'is-request' : ''}`}
+          data-conversation-row
+          data-list-key={conversation.listKey ?? 'personal'}
+          data-page-name={conversation.pageName ?? ''}
+        >
+          {conversation.otherUserImageUrl ? (
+            <img src={conversation.otherUserImageUrl} alt={conversation.otherUserName} />
+          ) : (
+            <span className="social-conversation-row__fallback">{initial}</span>
+          )}
+          <div>
+            <strong data-conversation-name>{conversation.otherUserName}</strong>
+            <small data-conversation-last>
+              <span>{scope}</span>
+              {conversation.lastMessage ? <span> - {conversation.lastMessage}</span> : null}
+            </small>
+          </div>
+          {conversation.lastMessageAt && (
+            <time data-conversation-time>{format(new Date(conversation.lastMessageAt), 'dd.MM HH:mm')}</time>
+          )}
+          {conversation.unreadCount > 0 && <b data-conversation-badge>{conversation.unreadCount}</b>}
+        </Link>
+      </div>
+    </div>
   )
 }
 
-export function InboxBoard({ conversations }: { conversations: Conversation[] }) {
+export function InboxBoard({ conversations: initial }: { conversations: Conversation[] }) {
+  const [conversations, setConversations] = useState(initial)
   const [tab, setTab] = useState<'personal' | 'page' | 'requests'>(() => {
-    if (conversations.some(c => (c.listKey ?? 'personal') === 'personal')) return 'personal'
-    if (conversations.some(c => c.listKey === 'page')) return 'page'
-    if (conversations.some(c => c.listKey === 'requests')) return 'requests'
+    if (initial.some(c => (c.listKey ?? 'personal') === 'personal')) return 'personal'
+    if (initial.some(c => c.listKey === 'page')) return 'page'
+    if (initial.some(c => c.listKey === 'requests')) return 'requests'
     return 'personal'
   })
   const [query, setQuery] = useState('')
   const [pageFilter, setPageFilter] = useState('')
+
+  const handleDelete = useCallback((token: string) => {
+    setConversations(prev => prev.filter(c => c.token !== token))
+  }, [])
 
   const grouped = useMemo(() => ({
     personal: conversations.filter(c => (c.listKey ?? 'personal') === 'personal'),
@@ -126,7 +241,9 @@ export function InboxBoard({ conversations }: { conversations: Conversation[] })
                 <i className={tab === 'page' ? 'bi bi-building' : 'bi bi-chat-dots'} />
                 <span>{query ? 'Няма разговори по това търсене.' : tab === 'page' ? 'Още няма съобщения към public pages.' : 'Няма разговори тук.'}</span>
               </div>
-            ) : visible.map(c => <ConversationRow key={c.token} conversation={c} />)}
+            ) : visible.map(c => (
+              <ConversationRow key={c.token} conversation={c} onDelete={handleDelete} />
+            ))}
           </div>
         </section>
       </div>

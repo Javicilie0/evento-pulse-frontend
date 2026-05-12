@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { getSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import type { EventCard as EventCardType } from '@/types/api'
 import { api } from '@/lib/api'
@@ -27,6 +27,16 @@ export function EventCard({ event, canManage }: Props) {
   const [attendance, setAttendance] = useState(event.userAttendanceStatus)
 
   const isToday = new Date(event.startTime).toDateString() === new Date().toDateString()
+  const [hovered, setHovered] = useState(false)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function onMouseEnter() {
+    hoverTimer.current = setTimeout(() => setHovered(true), 300)
+  }
+  function onMouseLeave() {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    setHovered(false)
+  }
 
   useEffect(() => {
     let joined = false
@@ -96,7 +106,45 @@ export function EventCard({ event, canManage }: Props) {
   }
 
   return (
-    <div className="card event-card evt-card" data-event-id={event.id} aria-label={event.title} style={{ position: 'relative' }}>
+    <div
+      className="card event-card evt-card"
+      data-event-id={event.id}
+      aria-label={event.title}
+      style={{ position: 'relative' }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* Desktop hover preview */}
+      {hovered && (
+        <div className="evt-card__hover-preview">
+          {event.imageUrl && (
+            <img src={mediaUrl(event.imageUrl)} alt={event.title} className="evt-card__hover-img" loading="lazy" />
+          )}
+          <div className="evt-card__hover-body">
+            <span className="evt-chip-sm">{event.genre}</span>
+            <strong>{event.title}</strong>
+            <p className="evt-card__hover-meta">
+              <i className="bi bi-geo-alt" /> {event.address}, {event.city}
+            </p>
+            <p className="evt-card__hover-meta">
+              <i className="bi bi-clock" /> {format(new Date(event.startTime), 'EEEE, dd MMM yyyy · HH:mm')}
+            </p>
+            {event.organizerName && (
+              <p className="evt-card__hover-meta">
+                <i className="bi bi-person-badge" /> {event.organizerName}
+              </p>
+            )}
+            {event.description && (
+              <p className="evt-card__hover-desc">{event.description.slice(0, 160)}{event.description.length > 160 ? '…' : ''}</p>
+            )}
+            <div className="evt-card__hover-stats">
+              <span><i className="bi bi-heart" /> {likes}</span>
+              <span><i className="bi bi-check2-circle" /> {goingCount}</span>
+              <span><i className="bi bi-star" /> {interestedCount}</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Media */}
       <div className="evt-card__media" style={{ position: 'relative', zIndex: 1 }}>
         {event.imageUrl ? (
