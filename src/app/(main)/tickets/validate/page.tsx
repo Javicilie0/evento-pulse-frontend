@@ -1,53 +1,132 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import Link from 'next/link'
+import Script from 'next/script'
+import { useSession } from 'next-auth/react'
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 
 interface ValidationTicket {
+  id?: string
   eventTitle: string
   ticketName: string
   ownerUserName: string
   ownerEmail: string
   attendeeName?: string
   startTime: string
+  endTime?: string
   address: string
   city: string
+  seatLabel?: string
+  transactionStatus?: string
+  qrCode?: string
   isUsed: boolean
+  usedAt?: string
 }
 
 interface ValidationResult {
   valid: boolean
   requiresConfirmation?: boolean
   alreadyUsed?: boolean
+  notAllowed?: boolean
+  notFound?: boolean
   message: string
   ticket?: ValidationTicket
 }
 
-// TypeScript declaration for BarcodeDetector (Chrome/Android)
+interface BarcodeDetectorInstance {
+  detect(source: CanvasImageSource): Promise<Array<{ rawValue: string }>>
+}
+
+interface BarcodeDetectorConstructor {
+  new(opts?: { formats: string[] }): BarcodeDetectorInstance
+}
+
+interface JsQrResult {
+  data: string
+}
+
 declare global {
   interface Window {
-    BarcodeDetector: {
-      new(opts?: { formats: string[] }): {
-        detect(source: CanvasImageSource): Promise<Array<{ rawValue: string }>>
-      }
-      getSupportedFormats(): Promise<string[]>
-    }
+    BarcodeDetector?: BarcodeDetectorConstructor
+    jsQR?: (
+      data: Uint8ClampedArray,
+      width: number,
+      height: number,
+      options?: { inversionAttempts?: 'dontInvert' | 'onlyInvert' | 'attemptBoth' | 'invertFirst' },
+    ) => JsQrResult | null
   }
 }
 
+function statusClass(result: ValidationResult) {
+  if (result.valid) return 'groove-status-badge-success'
+  if (result.requiresConfirmation) return 'groove-status-badge-muted'
+  if (result.alreadyUsed || result.notAllowed) return 'groove-status-badge-warning'
+  return 'groove-status-badge-danger'
+}
+
+function formatDate(value?: string, includeEnd?: string) {
+  if (!value) return '-'
+  const start = new Date(value)
+  if (Number.isNaN(start.getTime())) return '-'
+  const startLabel = start.toLocaleString('bg-BG', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  if (!includeEnd) return startLabel
+  const end = new Date(includeEnd)
+  return Number.isNaN(end.getTime())
+    ? startLabel
+    : `${startLabel} - ${end.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}`
+}
+
+function paymentLabel(status?: string) {
+  if (!status) return '-'
+  const normalized = status.toLowerCase()
+  if (normalized === 'paid') return 'Платено'
+  if (normalized === 'pending') return 'Чака плащане'
+  if (normalized === 'failed') return 'Неуспешно'
+  if (normalized === 'refunded') return 'Възстановено'
+  return status
+}
+
 export default function TicketValidatePage() {
+  const { data: session } = useSession()
+  const roles = session?.user?.roles ?? []
+  const dashboardHref = roles.includes('Admin')
+    ? '/admin'
+    : roles.includes('Organizer')
+    ? '/organizer/dashboard'
+    : '/account'
+  const dashboardLabel = roles.includes('Admin') ? 'Админ' : roles.includes('Organizer') ? 'Организатор' : 'Профил'
+
   const [qrCode, setQrCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ValidationResult | null>(null)
   const [cameraActive, setCameraActive] = useState(false)
+  const [cameraStatus, setCameraStatus] = useState('Камерата е изключена.')
   const [cameraError, setCameraError] = useState('')
-  const [scanPulse, setScanPulse] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const rafRef = useRef<number>(0)
-  const detectorRef = useRef<InstanceType<typeof window.BarcodeDetector> | null>(null)
+  const detectorRef = useRef<BarcodeDetectorInstance | null>(null)
   const foundRef = useRef(false)
+
+  const stopCamera = useCallback(() => {
+    cancelAnimationFrame(rafRef.current)
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current) videoRef.current.srcObject = null
+    foundRef.current = false
+    setCameraActive(false)
+    setCameraStatus('Камерата е изключена.')
+  }, [])
 
   async function submit(code: string, confirm: boolean) {
     const trimmed = code.trim()
@@ -58,110 +137,157 @@ export default function TicketValidatePage() {
       const res = await api.post<ValidationResult>('/api/tickets/validate', { qrCode: trimmed, confirm })
       setResult(res.data)
     } catch (error) {
-      const err = error as { response?: { data?: ValidationResult } }
-      setResult(err.response?.data ?? { valid: false, message: 'Грешка при валидиране.' })
+      const err = error as { response?: { data?: ValidationResult; status?: number } }
+      if (err.response?.status === 403) {
+        setResult({ valid: false, notAllowed: true, message: 'Нямаш право да валидираш този билет.' })
+      } else {
+        setResult(err.response?.data ?? { valid: false, message: 'Грешка при валидиране.' })
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const stopCamera = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-      streamRef.current = null
-    }
-    foundRef.current = false
-    setCameraActive(false)
-  }, [])
-
   const onQrFound = useCallback((value: string) => {
-    if (foundRef.current) return
+    const trimmed = value.trim()
+    if (!trimmed || foundRef.current) return
     foundRef.current = true
-    setScanPulse(true)
-    setTimeout(() => setScanPulse(false), 600)
-    setQrCode(value)
+    setQrCode(trimmed)
+    setCameraStatus('QR кодът е намерен. Отварям данните.')
     stopCamera()
-    submit(value, false)
+    submit(trimmed, false)
   }, [stopCamera])
 
-  const startScan = useCallback(async () => {
+  async function scanFrame() {
+    const video = videoRef.current
+    if (!video || foundRef.current) return
+
+    if (video.readyState >= 2) {
+      let value = ''
+      if (detectorRef.current) {
+        try {
+          const codes = await detectorRef.current.detect(video)
+          value = codes[0]?.rawValue ?? ''
+        } catch {
+          value = ''
+        }
+      }
+
+      if (!value && window.jsQR) {
+        const canvas = document.createElement('canvas')
+        const context = canvas.getContext('2d', { willReadFrequently: true })
+        if (context) {
+          canvas.width = video.videoWidth || 640
+          canvas.height = video.videoHeight || 480
+          context.drawImage(video, 0, 0, canvas.width, canvas.height)
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+          const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' })
+          value = code?.data ?? ''
+        }
+      }
+
+      if (value) {
+        onQrFound(value)
+        return
+      }
+    }
+
+    if (!foundRef.current) rafRef.current = requestAnimationFrame(scanFrame)
+  }
+
+  async function startCamera() {
     setCameraError('')
     setResult(null)
     foundRef.current = false
 
-    // Check BarcodeDetector support
-    const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window
+    if (!window.isSecureContext) {
+      setCameraError('Камерата работи само през HTTPS или localhost.')
+      return
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Браузърът няма достъп до камера.')
+      return
+    }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      })
+      detectorRef.current = window.BarcodeDetector ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null
+    } catch {
+      detectorRef.current = null
+    }
+
+    if (!detectorRef.current && !window.jsQR) {
+      setCameraError('QR четецът още се зарежда. Опитай отново след секунда или постави кода ръчно.')
+      return
+    }
+
+    try {
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        })
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      }
+
       streamRef.current = stream
       setCameraActive(true)
+      setCameraStatus('Насочи камерата към QR кода.')
 
-      // Wait for video to be ready
       setTimeout(async () => {
-        if (!videoRef.current || !streamRef.current) return
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-
-        if (hasNativeDetector) {
-          detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] })
-        }
-
-        const scan = async () => {
-          if (!videoRef.current || foundRef.current) return
-          if (videoRef.current.readyState >= 2) {
-            if (hasNativeDetector && detectorRef.current) {
-              try {
-                const results = await detectorRef.current.detect(videoRef.current)
-                if (results.length > 0 && results[0].rawValue) {
-                  onQrFound(results[0].rawValue)
-                  return
-                }
-              } catch {}
-            } else {
-              // Fallback: canvas + manual decode hint (no jsQR installed)
-              // Just keep scanning visually until user stops
-            }
-          }
-          if (!foundRef.current) {
-            rafRef.current = requestAnimationFrame(scan)
-          }
-        }
-        rafRef.current = requestAnimationFrame(scan)
-      }, 300)
-    } catch (err: any) {
-      const msg = err?.name === 'NotAllowedError'
-        ? 'Отказан достъп до камерата. Провери настройките на браузъра.'
-        : err?.name === 'NotFoundError'
-        ? 'Не е намерена камера на това устройство.'
-        : 'Камерата не може да бъде отворена.'
-      setCameraError(msg)
+        const video = videoRef.current
+        if (!video || !streamRef.current) return
+        video.srcObject = stream
+        await video.play()
+        rafRef.current = requestAnimationFrame(scanFrame)
+      }, 100)
+    } catch {
+      setCameraError('Камерата не може да се отвори. Провери разрешението в браузъра.')
     }
-  }, [onQrFound])
+  }
 
-  // File input fallback for iOS or devices without BarcodeDetector live scan
-  async function handleFileCapture(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileCapture(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
 
-    if (!('BarcodeDetector' in window)) {
-      setCameraError('Скенерът не се поддържа в този браузър. Постави кода ръчно.')
-      return
-    }
     try {
       const img = new Image()
       img.src = URL.createObjectURL(file)
-      await new Promise(res => { img.onload = res })
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
-      const results = await detector.detect(img)
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Image load failed'))
+      })
+
+      let value = ''
+      if (window.BarcodeDetector) {
+        try {
+          const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+          const codes = await detector.detect(img)
+          value = codes[0]?.rawValue ?? ''
+        } catch {
+          value = ''
+        }
+      }
+
+      if (!value && window.jsQR) {
+        const canvas = document.createElement('canvas')
+        const context = canvas.getContext('2d', { willReadFrequently: true })
+        if (context) {
+          canvas.width = img.naturalWidth
+          canvas.height = img.naturalHeight
+          context.drawImage(img, 0, 0)
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+          value = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })?.data ?? ''
+        }
+      }
+
       URL.revokeObjectURL(img.src)
-      if (results.length > 0 && results[0].rawValue) {
-        setQrCode(results[0].rawValue)
-        submit(results[0].rawValue, false)
+      if (value) {
+        setQrCode(value.trim())
+        submit(value, false)
       } else {
         setCameraError('QR кодът не беше разпознат. Опитай отново или постави кода ръчно.')
       }
@@ -170,160 +296,182 @@ export default function TicketValidatePage() {
     }
   }
 
+  function handleManualSubmit(e: FormEvent) {
+    e.preventDefault()
+    submit(qrCode, false)
+  }
+
   useEffect(() => () => stopCamera(), [stopCamera])
 
   return (
-    <section className="groove-app-page">
-      <div className="groove-page-hero">
-        <div className="groove-page-hero__copy">
-          <span className="groove-stamp groove-stamp-teal">Валидиране</span>
-          <h1 className="groove-panel-title">Проверка на билет</h1>
-          <p>Сканирай QR кода или постави го ръчно.</p>
-        </div>
-      </div>
+    <>
+      <Script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" strategy="afterInteractive" />
 
-      {/* Camera viewfinder */}
-      {cameraActive && (
-        <div className="qr-scanner-shell mt-4">
-          <div className={`qr-scanner-frame ${scanPulse ? 'qr-scanner-frame--pulse' : ''}`}>
-            <video ref={videoRef} playsInline muted className="qr-scanner-video" />
-            <div className="qr-scanner-overlay">
-              <div className="qr-scanner-corner qr-scanner-corner--tl" />
-              <div className="qr-scanner-corner qr-scanner-corner--tr" />
-              <div className="qr-scanner-corner qr-scanner-corner--bl" />
-              <div className="qr-scanner-corner qr-scanner-corner--br" />
-              <div className="qr-scanner-line" />
+      <section className="groove-app-page ticket-validator-page">
+        <div className="groove-page-hero">
+          <div className="groove-page-hero__copy">
+            <span className="groove-stamp groove-stamp-yellow">Вход</span>
+            <h1>Сканирай QR кода и потвърди билета.</h1>
+            <p>
+              Сканирането само отваря информацията за билета. Валидирането става чак след натискане на бутона за потвърждение.
+            </p>
+          </div>
+          <div className="groove-page-actions">
+            <Link href={dashboardHref} className="groove-button groove-button-paper">
+              <i className="bi bi-arrow-left" /> Към {dashboardLabel}
+            </Link>
+          </div>
+        </div>
+
+        <div className="ticket-validator-grid">
+          <div className="groove-form-panel groove-highlight-card ticket-scan-panel">
+            <span className="groove-kicker">Проверка</span>
+            <h2 className="groove-panel-title">Камера или ръчен код.</h2>
+            <p className="groove-panel-intro">Отвори камерата на телефона или постави QR стойността ръчно.</p>
+
+            <div className={`ticket-camera-box ${cameraActive ? 'is-active' : ''}`} aria-live="polite">
+              <video ref={videoRef} playsInline muted />
+              <div className="ticket-camera-placeholder">
+                <i className="bi bi-qr-code-scan" />
+                <span>{cameraStatus}</span>
+              </div>
             </div>
-            <p className="qr-scanner-hint">Насочи камерата към QR кода</p>
-          </div>
-          <button className="groove-button groove-button-paper mt-3 w-100" type="button" onClick={stopCamera}>
-            <i className="bi bi-x-circle" /> Затвори камерата
-          </button>
-        </div>
-      )}
 
-      {!cameraActive && (
-        <div className="groove-paper-card mt-4">
-          {/* Camera buttons */}
-          <div className="d-flex gap-2 mb-3 flex-wrap">
-            <button
-              className="groove-button groove-button-dark"
-              type="button"
-              onClick={startScan}
-              disabled={loading}
-            >
-              <i className="bi bi-camera" /> Сканирай с камера
-            </button>
+            <div className="ticket-camera-actions">
+              {!cameraActive ? (
+                <button type="button" className="groove-button groove-button-dark" onClick={startCamera} disabled={loading}>
+                  <i className="bi bi-camera-video" /> Отвори камера
+                </button>
+              ) : (
+                <button type="button" className="groove-button groove-button-paper" onClick={stopCamera}>
+                  <i className="bi bi-camera-video-off" /> Спри
+                </button>
+              )}
 
-            {/* File input fallback - hidden, triggered programmatically via label */}
-            <label className="groove-button groove-button-paper mb-0" style={{ cursor: 'pointer' }}>
-              <i className="bi bi-image" /> Снимка от галерия
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={handleFileCapture}
-                disabled={loading}
-              />
-            </label>
-          </div>
-
-          {cameraError && (
-            <div className="groove-alert groove-alert-warning mb-3" role="alert">
-              <i className="bi bi-exclamation-triangle" /> {cameraError}
+              <label className="groove-button groove-button-paper mb-0" style={{ cursor: 'pointer' }}>
+                <i className="bi bi-image" /> Снимка от галерия
+                <input type="file" accept="image/*" capture="environment" hidden onChange={handleFileCapture} disabled={loading} />
+              </label>
             </div>
-          )}
 
-          <label className="form-label fw-bold" htmlFor="qrCode">
-            Или постави QR кода ръчно
-          </label>
-          <textarea
-            id="qrCode"
-            className="form-control"
-            rows={3}
-            value={qrCode}
-            onChange={e => setQrCode(e.target.value)}
-            placeholder="Постави кода тук..."
-          />
-          <div className="groove-form-actions mt-3">
-            <button
-              className="groove-button groove-button-dark"
-              disabled={loading || !qrCode.trim()}
-              type="button"
-              onClick={() => submit(qrCode, false)}
-            >
-              {loading
-                ? <span className="spinner-border spinner-border-sm" />
-                : <i className="bi bi-search" />}
-              <span>Провери</span>
-            </button>
+            {cameraError && (
+              <div className="groove-alert groove-alert-warning mt-3" role="alert">
+                <i className="bi bi-exclamation-triangle" /> {cameraError}
+              </div>
+            )}
+
+            <form onSubmit={handleManualSubmit} className="mt-4">
+              <div className="mb-3">
+                <label htmlFor="qrCode" className="form-label">QR код</label>
+                <input
+                  id="qrCode"
+                  className="form-control"
+                  autoComplete="off"
+                  autoFocus
+                  value={qrCode}
+                  onChange={e => setQrCode(e.target.value)}
+                  placeholder="Постави кода тук..."
+                />
+              </div>
+
+              <div className="groove-form-actions">
+                <button type="submit" className="groove-button groove-button-dark" disabled={loading || !qrCode.trim()}>
+                  {loading ? <span className="spinner-border spinner-border-sm" /> : <i className="bi bi-search" />}
+                  Провери билета
+                </button>
+                {qrCode && (
+                  <button type="button" className="groove-button groove-button-paper" onClick={() => { setQrCode(''); setResult(null) }}>
+                    Изчисти
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="ticket-validation-card">
+            {!result ? (
+              <>
+                <span className="groove-kicker">Резултат</span>
+                <h2 className="groove-panel-title">Очаквам сканиране.</h2>
+                <p className="groove-panel-intro">Тук ще се появи карта с данните за билета, преди да бъде маркиран като използван.</p>
+              </>
+            ) : (
+              <>
+                <span className={`groove-status-badge ${statusClass(result)}`}>{result.message}</span>
+
+                {result.ticket && (
+                  <div className="ticket-validation-card__body">
+                    <div>
+                      <span className="groove-kicker">Билет</span>
+                      <h2 className="groove-panel-title">{result.ticket.eventTitle}</h2>
+                      <p className="groove-muted-copy">{result.ticket.ticketName}</p>
+                    </div>
+
+                    {result.ticket.id && (
+                      <img className="ticket-validation-card__qr" src={`/api/tickets/${result.ticket.id}/qr`} alt="QR код" />
+                    )}
+
+                    <dl className="groove-data-list ticket-validation-data">
+                      <dt>Притежател</dt>
+                      <dd>{result.ticket.ownerUserName}</dd>
+
+                      <dt>Имейл</dt>
+                      <dd>{result.ticket.ownerEmail}</dd>
+
+                      {result.ticket.attendeeName && (
+                        <>
+                          <dt>Име на билет</dt>
+                          <dd>{result.ticket.attendeeName}</dd>
+                        </>
+                      )}
+
+                      <dt>Дата</dt>
+                      <dd>{formatDate(result.ticket.startTime, result.ticket.endTime)}</dd>
+
+                      <dt>Място</dt>
+                      <dd>{result.ticket.city}, {result.ticket.address}</dd>
+
+                      {result.ticket.seatLabel && (
+                        <>
+                          <dt>Седалка</dt>
+                          <dd>{result.ticket.seatLabel}</dd>
+                        </>
+                      )}
+
+                      <dt>Плащане</dt>
+                      <dd>{paymentLabel(result.ticket.transactionStatus)}</dd>
+
+                      <dt>QR</dt>
+                      <dd className="ticket-validation-code">{result.ticket.qrCode ?? qrCode}</dd>
+
+                      {result.ticket.isUsed && result.ticket.usedAt && (
+                        <>
+                          <dt>Използван</dt>
+                          <dd>{formatDate(result.ticket.usedAt)}</dd>
+                        </>
+                      )}
+                    </dl>
+
+                    {result.requiresConfirmation && (
+                      <div className="ticket-confirm-form">
+                        <button className="groove-button groove-button-dark" type="button" disabled={loading} onClick={() => submit(qrCode, true)}>
+                          <i className="bi bi-check2-circle" /> Валидирай билета
+                        </button>
+                      </div>
+                    )}
+
+                    {(result.valid || result.alreadyUsed) && (
+                      <button className="groove-button groove-button-paper mt-2" type="button" onClick={() => { setResult(null); setQrCode('') }}>
+                        <i className="bi bi-arrow-repeat" /> Нова проверка
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
-      )}
-
-      {result && (
-        <div className={`groove-paper-card mt-4 ${result.valid ? 'border-success' : result.alreadyUsed ? 'border-warning' : 'border-danger'}`}>
-          <h2 className="groove-panel-title mb-2">{result.message}</h2>
-          {result.ticket && (
-            <dl className="groove-data-list mt-3">
-              <dt>Събитие</dt>
-              <dd>{result.ticket.eventTitle}</dd>
-              <dt>Билет</dt>
-              <dd>{result.ticket.ticketName}</dd>
-              <dt>Притежател</dt>
-              <dd>{result.ticket.attendeeName || result.ticket.ownerUserName} ({result.ticket.ownerEmail})</dd>
-              <dt>Начало</dt>
-              <dd>{new Date(result.ticket.startTime).toLocaleString('bg-BG')}</dd>
-              <dt>Локация</dt>
-              <dd>{result.ticket.address}, {result.ticket.city}</dd>
-            </dl>
-          )}
-          {result.requiresConfirmation && (
-            <button
-              className="groove-button groove-button-dark mt-3"
-              type="button"
-              disabled={loading}
-              onClick={() => submit(qrCode, true)}
-            >
-              <i className="bi bi-check2-circle" /> Потвърди валидиране
-            </button>
-          )}
-          {(result.valid || result.alreadyUsed) && (
-            <button
-              className="groove-button groove-button-paper mt-3"
-              type="button"
-              onClick={() => { setResult(null); setQrCode('') }}
-            >
-              <i className="bi bi-arrow-repeat" /> Нова проверка
-            </button>
-          )}
-        </div>
-      )}
-
-      <style>{`
-        .qr-scanner-shell { max-width: 400px; margin: 0 auto; }
-        .qr-scanner-frame { position: relative; width: 100%; aspect-ratio: 1; background: #000; border-radius: 12px; overflow: hidden; }
-        .qr-scanner-frame--pulse { outline: 3px solid #22c55e; outline-offset: 2px; }
-        .qr-scanner-video { width: 100%; height: 100%; object-fit: cover; }
-        .qr-scanner-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-        .qr-scanner-corner { position: absolute; width: 28px; height: 28px; border-color: #fff; border-style: solid; border-width: 0; }
-        .qr-scanner-corner--tl { top: 16px; left: 16px; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
-        .qr-scanner-corner--tr { top: 16px; right: 16px; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
-        .qr-scanner-corner--bl { bottom: 16px; left: 16px; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
-        .qr-scanner-corner--br { bottom: 16px; right: 16px; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
-        .qr-scanner-line {
-          position: absolute;
-          left: 16px; right: 16px; height: 2px;
-          background: rgba(99,102,241,0.8);
-          animation: qr-scan 2s ease-in-out infinite;
-        }
-        .qr-scanner-hint { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.85); font-size: 0.8rem; margin: 0; }
-        @keyframes qr-scan {
-          0%, 100% { top: 20%; }
-          50% { top: 75%; }
-        }
-      `}</style>
-    </section>
+      </section>
+    </>
   )
 }
