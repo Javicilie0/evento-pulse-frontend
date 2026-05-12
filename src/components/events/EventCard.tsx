@@ -96,9 +96,9 @@ export function EventCard({ event, canManage }: Props) {
   }
 
   return (
-    <div className="card event-card evt-card" data-event-id={event.id} aria-label={event.title}>
+    <div className="card event-card evt-card" data-event-id={event.id} aria-label={event.title} style={{ position: 'relative' }}>
       {/* Media */}
-      <div className="evt-card__media">
+      <div className="evt-card__media" style={{ position: 'relative', zIndex: 1 }}>
         {event.imageUrl ? (
           <img src={mediaUrl(event.imageUrl)} alt={event.title} loading="lazy" decoding="async" />
         ) : (
@@ -129,7 +129,8 @@ export function EventCard({ event, canManage }: Props) {
       <div className="evt-card__body">
         <div className="evt-card__heading">
           <h3 className="evt-card__title">
-            <Link href={`/events/${event.id}`} data-translate-text="event-title">
+            {/* stretched-link makes the whole card clickable */}
+            <Link href={`/events/${event.id}`} className="stretched-link" data-translate-text="event-title">
               {event.title}
             </Link>
           </h3>
@@ -141,14 +142,14 @@ export function EventCard({ event, canManage }: Props) {
         </div>
 
         {event.organizerName && (
-          <Link href={event.organizerProfileId ? `/pages/${event.organizerProfileId}` : `/events/${event.id}`} className="evt-card__organizer">
+          <Link href={event.organizerProfileId ? `/pages/${event.organizerProfileId}` : `/events/${event.id}`} className="evt-card__organizer" style={{ position: 'relative', zIndex: 2 }}>
             <span className="evt-card__organizer-avatar">{event.organizerName.trim()[0]?.toUpperCase()}</span>
             <span>{event.organizerName}</span>
           </Link>
         )}
 
-        {/* Actions */}
-        <div className="evt-card__actions">
+        {/* Actions — z-index:2 to stay above the stretched-link overlay */}
+        <div className="evt-card__actions" style={{ position: 'relative', zIndex: 2 }}>
           {isAuthed ? (
             <>
               <button
@@ -193,7 +194,7 @@ export function EventCard({ event, canManage }: Props) {
 
         {/* Manage actions */}
         {canManage && (
-          <div className="evt-card__actions" style={{ borderTop: 'none', paddingTop: 0, marginTop: -2 }}>
+          <div className="evt-card__actions" style={{ borderTop: 'none', paddingTop: 0, marginTop: -2, position: 'relative', zIndex: 2 }}>
             <span className="text-muted small" style={{ marginRight: 'auto' }}>
               <i className="bi bi-shield-check" /> Управление
             </span>
