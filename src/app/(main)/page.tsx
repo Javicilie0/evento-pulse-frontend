@@ -89,11 +89,12 @@ function HeroStatsSkeleton() {
 async function HeroStatsServer({ sp, page }: { sp: SearchParams; page: number }) {
   const data = await getEvents({
     page: String(page), pageSize: '12',
-    ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
+    ...(sp.search ? { keyword: sp.search } : {}),
     ...(sp.city ? { city: sp.city } : {}),
     ...(sp.genre ? { genre: sp.genre } : {}),
     ...(sp.dateFrom ? { dateFrom: sp.dateFrom } : {}),
     ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
+    ...(sp.sort ? { sort: sp.sort } : {}),
   })
   const cityCount = new Set(data.items.map(e => e.city)).size
   const pinCount = data.items.filter(e => e.latitude != null && e.longitude != null).length
@@ -118,35 +119,47 @@ async function HeroStatsServer({ sp, page }: { sp: SearchParams; page: number })
 async function HomeMapServer({ sp, page }: { sp: SearchParams; page: number }) {
   const data = await getEvents({
     page: String(page), pageSize: '12',
-    ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
+    ...(sp.search ? { keyword: sp.search } : {}),
     ...(sp.city ? { city: sp.city } : {}),
     ...(sp.genre ? { genre: sp.genre } : {}),
     ...(sp.dateFrom ? { dateFrom: sp.dateFrom } : {}),
     ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
+    ...(sp.sort ? { sort: sp.sort } : {}),
   })
   const mapMarkers = data.items
     .filter(e => e.latitude != null && e.longitude != null)
     .map(e => ({
       eventId: e.id, title: e.title, city: e.city, address: e.address,
       startTime: e.startTime, genre: e.genre, imageUrl: mediaUrl(e.imageUrl),
+      organizerName: e.organizerName,
       lat: e.latitude as number, lng: e.longitude as number, isApproximate: false,
     }))
   return <HomeMap markers={mapMarkers} hasMarkers={mapMarkers.length > 0} />
 }
 
-async function EventsContentServer({ sp, page, isTabAll, isTabFree }: {
-  sp: SearchParams; page: number; isTabAll: boolean; isTabFree: boolean
+async function EventsContentServer({ sp, page }: {
+  sp: SearchParams; page: number
 }) {
   const data = await getEvents({
     page: String(page), pageSize: '12',
-    ...(sp.search && sp.search !== 'free' ? { keyword: sp.search } : {}),
+    ...(sp.search ? { keyword: sp.search } : {}),
     ...(sp.city ? { city: sp.city } : {}),
     ...(sp.genre ? { genre: sp.genre } : {}),
     ...(sp.dateFrom ? { dateFrom: sp.dateFrom } : {}),
     ...(sp.dateTo ? { dateTo: sp.dateTo } : {}),
+    ...(sp.sort ? { sort: sp.sort } : {}),
   })
 
   const visibleCount = Math.min(data.totalCount, page * 12)
+  const buildHref = (overrides: Partial<SearchParams>) => {
+    const params = new URLSearchParams()
+    const merged = { ...sp, ...overrides }
+    Object.entries(merged).forEach(([key, value]) => {
+      if (value) params.set(key, value)
+    })
+    const qs = params.toString()
+    return `/${qs ? `?${qs}` : ''}`
+  }
   const trendingEvents = [...data.items]
     .sort((a, b) =>
       (b.goingCount * 2 + b.interestedCount + b.likesCount + b.savesCount) -
@@ -172,7 +185,7 @@ async function EventsContentServer({ sp, page, isTabAll, isTabFree }: {
               </span>
               <Link
                 scroll={false}
-                href={`/?page=${page + 1}${sp.search ? `&search=${sp.search}` : ''}${sp.genre ? `&genre=${sp.genre}` : ''}${sp.dateFrom ? `&dateFrom=${sp.dateFrom}` : ''}${sp.dateTo ? `&dateTo=${sp.dateTo}` : ''}`}
+                href={buildHref({ page: String(page + 1) })}
                 className="evt-btn evt-btn-ghost"
               >
                 <i className="bi bi-plus-circle" />
@@ -361,6 +374,24 @@ export default async function HomePage({ searchParams }: Props) {
               Подбрани събития, фестивали и партита около теб.
             </p>
           </div>
+          <form id="home-events-filter" method="get" className="evt-toolbar" style={{ gap: 8 }}>
+            {sp.search && <input type="hidden" name="search" value={sp.search} />}
+            {sp.city && <input type="hidden" name="city" value={sp.city} />}
+            {sp.genre && <input type="hidden" name="genre" value={sp.genre} />}
+            {sp.dateFrom && <input type="hidden" name="dateFrom" value={sp.dateFrom} />}
+            {sp.dateTo && <input type="hidden" name="dateTo" value={sp.dateTo} />}
+            <div className="evt-sort">
+              <i className="bi bi-arrow-down-up" />
+              <select name="sort" defaultValue={sp.sort ?? 'recent'}>
+                <option value="recent" data-i18n="sort.recent">Recently added</option>
+                <option value="soon" data-i18n="sort.soon">Starting soon</option>
+                <option value="popular" data-i18n="sort.popular">Most popular</option>
+              </select>
+            </div>
+            <button type="submit" className="evt-btn evt-btn-ghost" style={{ padding: '8px 16px' }}>
+              <i className="bi bi-funnel" /> <span data-i18n="home.filter.btn">Филтрирай</span>
+            </button>
+          </form>
         </div>
 
         {/* Genre chips — instant, no API */}
@@ -383,7 +414,7 @@ export default async function HomePage({ searchParams }: Props) {
 
         {/* Events grid — streams in */}
         <Suspense fallback={<EventsGridSkeleton />}>
-          <EventsContentServer sp={sp} page={page} isTabAll={isTabAll} isTabFree={isTabFree} />
+          <EventsContentServer sp={sp} page={page} />
         </Suspense>
       </section>
     </div>
