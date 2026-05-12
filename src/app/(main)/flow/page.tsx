@@ -1,11 +1,17 @@
 import { format } from 'date-fns'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { Manrope } from 'next/font/google'
 import { auth } from '@/lib/auth'
 import { mediaUrl } from '@/lib/media'
 import { authenticatedServerApi } from '@/lib/serverApi'
 import { PostCard } from '@/components/posts/PostCard'
 import type { EventCard as EventCardType, PaginatedResult, Post } from '@/types/api'
+
+const manrope = Manrope({
+  subsets: ['cyrillic', 'latin'],
+  display: 'swap',
+})
 
 interface Props {
   searchParams: Promise<{
@@ -410,6 +416,7 @@ export default async function FlowPage({ searchParams }: Props) {
   const extras = await getFeedExtras(sp.q)
   const title = TITLE_BY_FILTER[filter] ?? TITLE_BY_FILTER.all
   const visibleCount = Math.min(data.totalCount || data.items.length, page * data.pageSize)
+  const totalPosts = data.totalCount || data.items.length
   const showDiscoveryStrip = filter === 'all' && (
     extras.suggestedProfiles.length > 0 ||
     extras.recommendedEvents.length > 0 ||
@@ -433,18 +440,32 @@ export default async function FlowPage({ searchParams }: Props) {
   }
 
   return (
-    <section className="groove-feed-page social-feed-page social-feed-page--stream">
+    <section className={`groove-feed-page social-feed-page social-feed-page--stream social-feed-redesign ${manrope.className}`}>
       <header className="social-feed-topbar">
         <div>
           <span className="groove-stamp groove-stamp-teal" data-i18n="feed.kicker">Discover</span>
-          <h1 data-i18n="feed.title">Събития, организатори и новини от сцената.</h1>
+          <h1 data-i18n="feed.title">Пулсът на сцената.</h1>
+          <p className="social-feed-topbar__lead">
+            Следи организатори, откривай събития и виж какво се случва около теб.
+          </p>
         </div>
-        {canCreatePublicContent && (
-          <Link href="/account" className="groove-button groove-button-paper">
-            <i className="bi bi-columns-gap" /> <span data-i18n="account.overview">Преглед</span>
+        <div className="social-feed-topbar__actions">
+          {canCreatePublicContent && (
+            <Link href="/flow/new" className="groove-button groove-button-primary">
+              <i className="bi bi-plus-lg" /> Нова публикация
+            </Link>
+          )}
+          <Link href="/events/recommended" className="groove-button groove-button-paper">
+            <i className="bi bi-stars" /> Препоръчани
           </Link>
-        )}
+        </div>
       </header>
+
+      <div className="social-feed-pulse-row" aria-label="Feed overview">
+        <span><strong>{totalPosts}</strong><small>публикации</small></span>
+        <span><strong>{extras.recommendedEvents.length}</strong><small>събития</small></span>
+        <span><strong>{extras.suggestedProfiles.length}</strong><small>профили</small></span>
+      </div>
 
       <section className="social-feed-search" id="feed-filter-anchor" data-filter-anchor data-filter-button-label="Филтри">
         <form method="GET" action="/flow" className="social-feed-search__form">
