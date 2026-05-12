@@ -5,6 +5,8 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -12,19 +14,20 @@ function LoginForm() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [resendDone, setResendDone] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setNeedsConfirmation(false)
     setLoading(true)
 
     try {
-      // Call backend directly to get the exact error message
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
-      const checkRes = await fetch(`${apiUrl}/api/auth/login`, {
+      const checkRes = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -32,11 +35,12 @@ function LoginForm() {
 
       if (!checkRes.ok) {
         const body = await checkRes.json().catch(() => ({}))
-        setError(body?.error ?? 'Грешен имейл или парола.')
+        const msg: string = body?.error ?? 'Грешен имейл или парола.'
+        setError(msg)
+        if (msg.toLowerCase().includes('потвърди')) setNeedsConfirmation(true)
         return
       }
 
-      // Credentials valid — create NextAuth session
       const result = await signIn('credentials', { email, password, redirect: false })
       if (result?.error) {
         setError('Грешен имейл или парола.')
@@ -48,6 +52,20 @@ function LoginForm() {
       setError('Мрежова грешка. Опитай отново.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function resendConfirmation() {
+    setResendLoading(true)
+    try {
+      await fetch(`${API_URL}/api/auth/resend-confirmation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      setResendDone(true)
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -67,6 +85,24 @@ function LoginForm() {
             {error && (
               <div className="auth-zine-validation" role="alert">
                 <ul><li>{error}</li></ul>
+                {needsConfirmation && !resendDone && (
+                  <button
+                    type="button"
+                    className="auth-zine-button auth-zine-button-red"
+                    style={{ marginTop: '0.5rem', width: '100%' }}
+                    disabled={resendLoading}
+                    onClick={resendConfirmation}
+                  >
+                    {resendLoading
+                      ? <span className="spinner-border spinner-border-sm" />
+                      : <><i className="bi bi-envelope" /> Изпрати нов линк</>}
+                  </button>
+                )}
+                {resendDone && (
+                  <p style={{ marginTop: '0.5rem', color: '#16a34a', fontSize: '0.85rem' }}>
+                    <i className="bi bi-check-circle" /> Изпратихме нов линк за потвърждение.
+                  </p>
+                )}
               </div>
             )}
 
@@ -97,15 +133,6 @@ function LoginForm() {
                 required
               />
             </div>
-
-            <label className="auth-zine-check">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={e => setRemember(e.target.checked)}
-              />
-              <span data-i18n="login.remember">Запомни ме</span>
-            </label>
 
             <button
               id="login-submit"
