@@ -42,7 +42,7 @@ export default async function AccountPage() {
 
           <aside className="groove-info-card">
             <div className="groove-form-actions flex-column">
-              <Link href={`/profile/${user.id}`} className="groove-button groove-button-paper">
+              <Link href="/profile/me" className="groove-button groove-button-paper">
                 <i className="bi bi-person-lines-fill" /> <span>Публичен профил</span>
               </Link>
               <Link href="/tickets" className="groove-button groove-button-paper">

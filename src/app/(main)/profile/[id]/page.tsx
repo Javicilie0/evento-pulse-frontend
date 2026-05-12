@@ -1,7 +1,7 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { UserProfile } from '@/types/api'
+import type { AuthUser, UserProfile } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
 import { ProfileActions } from './ProfileActions'
 
@@ -10,9 +10,52 @@ interface Props {
 }
 
 async function getProfile(id: string): Promise<UserProfile | null> {
-  try {
-    const res = await (await authenticatedServerApi()).get<UserProfile>(`/api/profiles/${id}`)
+  const sapi = await authenticatedServerApi()
+  const readProfile = async (path: string) => {
+    const res = await sapi.get<UserProfile>(path)
     return res.data
+  }
+
+  try {
+    return await readProfile(`/api/profiles/${encodeURIComponent(id)}`)
+  } catch {}
+
+  if (id.toLowerCase() === 'me') {
+    try {
+      return await readProfile('/api/profiles/me')
+    } catch {}
+
+    try {
+      const res = await sapi.get<AuthUser>('/api/auth/me')
+      const me = res.data
+      if (me.id) {
+        try {
+          return await readProfile(`/api/profiles/${encodeURIComponent(me.id)}`)
+        } catch {}
+      }
+
+      return {
+        id: me.id || me.userName || 'me',
+        userName: me.userName,
+        firstName: me.firstName,
+        lastName: me.lastName,
+        profileImageUrl: me.profileImageUrl,
+        bio: me.bio,
+        followerCount: 0,
+        followingCount: 0,
+        isFollowing: false,
+        isOwnProfile: true,
+        roles: me.roles ?? [],
+      }
+    } catch {}
+  }
+
+  try {
+    return await readProfile(`/api/profiles/by-name/${encodeURIComponent(id)}`)
+  } catch {}
+
+  try {
+    return await readProfile(`/api/profiles/username/${encodeURIComponent(id)}`)
   } catch {
     return null
   }
