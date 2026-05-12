@@ -21,44 +21,70 @@ async function getRecommended(): Promise<RecommendedResponse> {
 
 export default async function RecommendedPage() {
   const { items, isPersonalized } = await getRecommended()
+  const recommendationsLabel = items.length === 1 ? 'събитие' : 'събития'
 
   return (
-    <section className="groove-app-page">
-      <div className="groove-page-hero">
-        <div className="groove-page-hero__copy">
-          <span className="groove-stamp groove-stamp-teal" data-i18n="recommended.stamp">Препоръчани</span>
-          <h1 data-i18n-html="recommended.title">За <span>теб</span>.</h1>
-          <p>
-            {isPersonalized
-              ? 'Събитията са подредени според твоите харесвания и интереси.'
-              : 'Популярни предстоящи събития. Харесай или запази, за да получиш персонализирани препоръки.'}
-          </p>
+    <section className="evt-page-shell">
+      <header className="evt-page-hero">
+        <span className="evt-page-hero__kicker">
+          <i className="bi bi-stars" /> <span data-i18n="rec.stamp">Подбор</span>
+        </span>
+        <h1 data-i18n-html="rec.h1">Вечери, избрани <span>за теб</span>.</h1>
+        <p data-i18n="rec.p">
+          Тук събираме предстоящите събития, които най-добре пасват на твоите предпочитания.
+          Ако още не си ги настроил, ще покажем всички одобрени предложения.
+        </p>
+        <div className="evt-page-hero__cta">
+          <Link href="/preferences" className="evt-btn evt-btn-ghost">
+            <i className="bi bi-sliders" /> <span data-i18n="rec.myprefs">Моите предпочитания</span>
+          </Link>
+          <Link href="/preferences" className="evt-btn evt-btn-primary">
+            <i className="bi bi-pencil" /> <span data-i18n="rec.settings">Настрой препоръките</span>
+          </Link>
         </div>
-        <Link href="/" className="groove-button groove-button-paper">
-          <i className="bi bi-arrow-left" /> <span data-i18n="common.back">Назад</span>
-        </Link>
-      </div>
+      </header>
 
-      {isPersonalized && (
-        <div className="groove-alert mt-3 mb-0" style={{ background: 'var(--bs-info-bg-subtle)', borderColor: 'var(--bs-info)', borderRadius: 8, padding: '10px 14px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <i className="bi bi-stars" />
-          Персонализирано за теб на база твоите харесвания и посещения
+      {!isPersonalized && (
+        <div className="evt-page-banner">
+          <i className="bi bi-info-circle" />
+          <div>
+            <strong data-i18n="rec.no.prefs">Нямаш запазени предпочитания.</strong>
+            <span data-i18n="rec.no.prefs.desc">
+              Показваме всички предстоящи одобрени събития. Добави любим жанр, град или радиус,
+              за да получаваш по-точни предложения.
+            </span>
+          </div>
         </div>
       )}
 
       {items.length === 0 ? (
-        <div className="groove-empty-card mt-4">
+        <div className="evt-page-empty">
           <i className="bi bi-stars" />
-          <h2 className="groove-panel-title">Все още няма препоръки.</h2>
-          <p className="text-muted">Харесай или запази някои събития и ще видиш персонализиран feed.</p>
-          <Link href="/" className="groove-button groove-button-dark mt-3">
-            <i className="bi bi-search" /> Разгледай всички
-          </Link>
+          <h2 data-i18n-html="rec.empty.title">Още няма <span>точно попадение</span>.</h2>
+          <p data-i18n="rec.empty.desc">
+            Няма предстоящи събития, които да отговарят на сегашните ти настройки.
+            Можеш да ги промениш или да разгледаш всички събития.
+          </p>
+          <div className="evt-page-hero__cta">
+            <Link href="/preferences" className="evt-btn evt-btn-primary">
+              <i className="bi bi-sliders" /> <span data-i18n="rec.change.prefs">Промени предпочитанията</span>
+            </Link>
+            <Link href="/" className="evt-btn evt-btn-ghost">
+              <i className="bi bi-compass" /> <span data-i18n="nav.home">Към началото</span>
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="evt-grid mt-4">
-          {items.map(e => <EventCard key={e.id} event={e} />)}
-        </div>
+        <section className="evt-page-section">
+          <header className="evt-page-section__head">
+            <span className="evt-page-section__kicker" data-i18n="rec.upcoming.kicker">Предстоящи предложения</span>
+            <h2>{items.length} <span>{recommendationsLabel}</span> за следващите дни.</h2>
+          </header>
+
+          <div className="evt-page-grid">
+            {items.map(e => <EventCard key={e.id} event={e} />)}
+          </div>
+        </section>
       )}
     </section>
   )
