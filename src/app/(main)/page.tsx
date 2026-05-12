@@ -7,6 +7,12 @@ import type { EventCard as EventCardType, PaginatedResult } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { Manrope } from 'next/font/google'
+
+const manrope = Manrope({
+  subsets: ['cyrillic', 'latin'],
+  display: 'swap',
+})
 
 interface SearchParams {
   search?: string
@@ -262,7 +268,7 @@ export default async function HomePage({ searchParams }: Props) {
   const isTabFree = sp.search === 'free'
 
   return (
-    <div className="evt-shell">
+    <div className={`evt-shell evt-home-redesign ${manrope.className}`}>
 
       {/* Marquee — instant */}
       <div className="evt-marquee" aria-hidden="true">
