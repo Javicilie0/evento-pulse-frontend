@@ -104,7 +104,7 @@ export default function EditApplicationPage() {
           {success && <div className="alert alert-success">Промените са запазени.</div>}
 
           <div className="mb-3">
-            <label className="form-label">Организация / Сценичен псевдоним</label>
+            <label className="form-label">Име на организация / място</label>
             <input className="form-control" value={form.organizationName} onChange={e => set('organizationName', e.target.value)} required maxLength={200} />
           </div>
 
@@ -116,11 +116,11 @@ export default function EditApplicationPage() {
           <div className="groove-form-grid">
             <div className="mb-3">
               <label className="form-label">Телефон</label>
-              <input className="form-control" value={form.phoneNumber} onChange={e => set('phoneNumber', e.target.value)} required />
+              <input className="form-control" value={form.phoneNumber} onChange={e => set('phoneNumber', e.target.value)} />
             </div>
             <div className="mb-3">
               <label className="form-label">Град</label>
-              <input className="form-control" value={form.city} onChange={e => set('city', e.target.value)} required maxLength={100} />
+              <input className="form-control" value={form.city} onChange={e => set('city', e.target.value)} maxLength={100} />
             </div>
           </div>
 
