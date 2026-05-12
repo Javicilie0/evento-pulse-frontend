@@ -381,6 +381,12 @@ export function ConversationClient({ conversation }: { conversation: Conversatio
       setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, message])
     })
 
+    connection.on('MessageLiked', (data: { messageId: number; likesCount: number }) => {
+      setMessages(prev => prev.map(m =>
+        m.id === data.messageId ? { ...m, likesCount: data.likesCount } : m
+      ))
+    })
+
     connection.start()
       .then(() => connection.invoke('JoinConversation', conversation.token))
       .catch(() => {})

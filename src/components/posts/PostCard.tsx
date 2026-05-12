@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { getSession } from 'next-auth/react'
 import { api } from '@/lib/api'
 import { mediaUrl } from '@/lib/media'
+import { getFeedConnection } from '@/lib/feedHub'
 import { CommentsDrawer } from './CommentsDrawer'
 import type { Post } from '@/types/api'
 
@@ -25,6 +27,25 @@ export function PostCard({ post }: Props) {
   const [isSaved, setIsSaved] = useState(post.isSaved)
   const [comments, setComments] = useState(post.commentsCount)
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  useEffect(() => {
+    let joined = false
+    getFeedConnection(() => getSession().then(s => (s as any)?.accessToken ?? null))
+      .then(conn => {
+        conn.on('PostLiked', (data: { postId: number; likesCount: number }) => {
+          if (data.postId === post.id) setLikes(data.likesCount)
+        })
+        conn.invoke('JoinPost', post.id).then(() => { joined = true }).catch(() => {})
+      })
+      .catch(() => {})
+    return () => {
+      if (joined) {
+        getFeedConnection(() => getSession().then(s => (s as any)?.accessToken ?? null))
+          .then(conn => conn.invoke('LeavePost', post.id).catch(() => {}))
+          .catch(() => {})
+      }
+    }
+  }, [post.id])
 
   const preview = post.content.length > 220 ? post.content.slice(0, 220) + '...' : post.content
   const initial = (post.authorName?.[0] ?? '?').toUpperCase()

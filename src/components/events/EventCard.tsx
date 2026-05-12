@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { useState } from 'react'
+import { getSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import type { EventCard as EventCardType } from '@/types/api'
 import { api } from '@/lib/api'
 import { mediaUrl } from '@/lib/media'
+import { getFeedConnection } from '@/lib/feedHub'
 
 interface Props {
   event: EventCardType
@@ -25,6 +27,25 @@ export function EventCard({ event, canManage }: Props) {
   const [attendance, setAttendance] = useState(event.userAttendanceStatus)
 
   const isToday = new Date(event.startTime).toDateString() === new Date().toDateString()
+
+  useEffect(() => {
+    let joined = false
+    getFeedConnection(() => getSession().then(s => (s as any)?.accessToken ?? null))
+      .then(conn => {
+        conn.on('EventLiked', (data: { eventId: number; likesCount: number }) => {
+          if (data.eventId === event.id) setLikes(data.likesCount)
+        })
+        conn.invoke('JoinEvent', event.id).then(() => { joined = true }).catch(() => {})
+      })
+      .catch(() => {})
+    return () => {
+      if (joined) {
+        getFeedConnection(() => getSession().then(s => (s as any)?.accessToken ?? null))
+          .then(conn => conn.invoke('LeaveEvent', event.id).catch(() => {}))
+          .catch(() => {})
+      }
+    }
+  }, [event.id])
 
   async function handleLike() {
     if (!isAuthed) return (window.location.href = '/login')

@@ -21,19 +21,33 @@ function LoginForm() {
     setError('')
     setLoading(true)
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      // Call backend directly to get the exact error message
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
+      const checkRes = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    setLoading(false)
+      if (!checkRes.ok) {
+        const body = await checkRes.json().catch(() => ({}))
+        setError(body?.error ?? 'Грешен имейл или парола.')
+        return
+      }
 
-    if (result?.error) {
-      setError('Грешен имейл или парола.')
-    } else {
-      router.push(callbackUrl)
-      router.refresh()
+      // Credentials valid — create NextAuth session
+      const result = await signIn('credentials', { email, password, redirect: false })
+      if (result?.error) {
+        setError('Грешен имейл или парола.')
+      } else {
+        router.push(callbackUrl)
+        router.refresh()
+      }
+    } catch {
+      setError('Мрежова грешка. Опитай отново.')
+    } finally {
+      setLoading(false)
     }
   }
 
