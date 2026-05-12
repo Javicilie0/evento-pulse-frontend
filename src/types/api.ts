@@ -182,15 +182,57 @@ export interface UserTicket {
 export interface UserProfile {
   id: string
   userName: string
+  displayName?: string
   firstName?: string
   lastName?: string
   profileImageUrl?: string
   bio?: string
+  isOrganizer?: boolean
+  organizationName?: string
+  website?: string
+  profileStatusText?: string
+  profileStatusEmoji?: string
+  profileStatusUpdatedAt?: string
+  profileStatusVisibility?: string
+  pinnedEventId?: number
   followerCount: number
   followingCount: number
+  followersCount?: number
+  followingCountLegacy?: number
+  postsCount?: number
+  eventsCount?: number
+  savedEventsCount?: number
+  goingEventsCount?: number
+  ticketsCount?: number
+  vibeTags?: string[]
+  eventsAttendedCount?: number
+  eventsInterestedCount?: number
+  likesGivenCount?: number
+  monthlyEventsCount?: number
+  monthlyNewFollowersCount?: number
+  favouriteGenre?: string
+  citiesVisitedCount?: number
   isFollowing: boolean
+  currentUserFollows?: boolean
   isOwnProfile: boolean
+  isCurrentUser?: boolean
+  canStartConversation?: boolean
+  canEditProfileStatus?: boolean
   roles: string[]
+  pinnedEvent?: EventCard | null
+  sharedEvents?: EventCard[]
+  savedEvents?: EventCard[]
+  goingEvents?: EventCard[]
+  events?: EventCard[]
+  posts?: Post[]
+  memories?: Array<{
+    eventId: number
+    title: string
+    city: string
+    imageUrl?: string
+    eventDate: string
+    yearsAgo: number
+  }>
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────
