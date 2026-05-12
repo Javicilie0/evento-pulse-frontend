@@ -1,5 +1,4 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
-import Link from 'next/link'
 import type { Post } from '@/types/api'
 import { PostCard } from '@/components/posts/PostCard'
 
@@ -41,23 +40,24 @@ export default async function AdminDashboardPage() {
           <p>Оттук управляваш роли, кандидатури, събития, публикации, билети и транзакции в Evento.</p>
         </div>
         <div className="groove-page-actions">
-          <Link href="/account" className="groove-button groove-button-paper">
+          <a href="/account" className="groove-button groove-button-paper">
             <i className="bi bi-person-circle" /> Моят профил
-          </Link>
-          <Link href="/tickets/validate" className="groove-button groove-button-dark">
+          </a>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/tickets/validate" className="groove-button groove-button-dark">
             <i className="bi bi-qr-code-scan" /> Валидиране
-          </Link>
+          </a>
         </div>
       </div>
 
       <div className="row g-3 mt-2">
         {tiles.map(s => (
           <div key={s.label} className="col-6 col-md-4 col-lg-3">
-            <Link href={s.href} className="groove-paper-card text-center py-4 text-decoration-none d-block groove-stat-card">
+            <a href={s.href} className="groove-paper-card text-center py-4 text-decoration-none d-block groove-stat-card">
               <i className={`bi bi-${s.icon} fs-3 ${s.badge ? 'text-danger' : 'text-primary'} d-block mb-2`} />
               <div className={`fs-4 fw-bold ${s.badge ? 'text-danger' : ''}`}>{s.value}</div>
               <div className="small text-muted">{s.label}</div>
-            </Link>
+            </a>
           </div>
         ))}
       </div>
@@ -79,12 +79,12 @@ export default async function AdminDashboardPage() {
             { kicker: 'Продажби', title: 'Билети', text: 'Следене на продадени, използвани и активни билети.', href: '/admin/tickets' },
             { kicker: 'Финанси', title: 'Транзакции', text: 'Списък с плащания и обобщение на приходите.', href: '/admin/transactions' },
           ].map(action => (
-            <Link key={action.href} href={action.href} className="groove-paper-card admin-action-card">
+            <a key={action.href} href={action.href} className="groove-paper-card admin-action-card">
               <span className="groove-kicker">{action.kicker}</span>
               <h3 className="mt-2">{action.title}</h3>
               <p>{action.text}</p>
               <span className="admin-action-card__cta">Отвори</span>
-            </Link>
+            </a>
           ))}
         </div>
       </section>
