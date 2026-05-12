@@ -10464,7 +10464,9 @@ html[data-theme="dark"] .ticket-attendee-panel__hint {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    padding: 24px 0 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 16px 56px;
 }
 .evt-cal-head {
     display: flex;
@@ -10474,7 +10476,18 @@ html[data-theme="dark"] .ticket-attendee-panel__hint {
     flex-wrap: wrap;
 }
 .evt-cal-head h1 { font-size: 1.8rem; margin: 0; font-weight: 800; letter-spacing: -0.02em; }
-.evt-cal-controls { display: flex; align-items: center; gap: 8px; }
+.evt-cal-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.evt-cal-month-switcher {
+    display: grid;
+    grid-template-columns: 42px minmax(160px, 1fr) 42px;
+    align-items: center;
+    gap: 8px;
+}
 .evt-cal-nav {
     background: #fff;
     border: 1px solid #e5e7ef;
@@ -10483,6 +10496,10 @@ html[data-theme="dark"] .ticket-attendee-panel__hint {
     cursor: pointer;
     font-weight: 600;
     color: #0d1424;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 html[data-theme="dark"] .evt-cal-nav { background: #151a26; color: #e8eaf2; border-color: #262d3d; }
 .evt-cal-month {
@@ -10491,6 +10508,7 @@ html[data-theme="dark"] .evt-cal-nav { background: #151a26; color: #e8eaf2; bord
     text-transform: capitalize;
     min-width: 180px;
     text-align: center;
+    box-sizing: border-box;
 }
 .evt-cal-grid {
     background: #fff;
@@ -10542,8 +10560,19 @@ html[data-theme="dark"] .evt-cal-day.is-today {
     font-weight: 700;
     font-size: 0.85rem;
     color: #0d1424;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 html[data-theme="dark"] .evt-cal-day__num { color: #e8eaf2; }
+.evt-cal-day__num small {
+    display: none;
+    color: #8b91a4;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
 .evt-cal-day__events {
     display: flex;
     flex-direction: column;
@@ -10561,20 +10590,165 @@ html[data-theme="dark"] .evt-cal-day__num { color: #e8eaf2; }
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
+.evt-cal-event time { font-variant-numeric: tabular-nums; opacity: 0.86; flex: 0 0 auto; }
+.evt-cal-event span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .evt-cal-event:hover { background: #1f4be0; color: #fff; transform: translateX(2px); }
 .evt-cal-event--more {
     background: transparent !important;
     color: #2456ff !important;
-    text-align: center;
+    justify-content: center;
     padding: 2px;
     font-size: 0.7rem;
 }
+.evt-cal-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 38px 16px 28px;
+    text-align: center;
+    color: #5a6175;
+}
+.evt-cal-empty i {
+    font-size: 2rem;
+    color: #2456ff;
+}
+.evt-cal-empty strong {
+    color: #0d1424;
+    font-size: 1.1rem;
+}
+html[data-theme="dark"] .evt-cal-empty strong { color: #e8eaf2; }
+.evt-cal-mobile-help {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: #5a6175;
+    font-size: 0.85rem;
+}
 @media (max-width: 767.98px) {
-    .evt-cal-days { grid-auto-rows: minmax(70px, auto); }
-    .evt-cal-day { min-height: 70px; padding: 4px; }
-    .evt-cal-event { font-size: 0.6rem; padding: 2px 4px; }
+    .evt-cal-shell {
+        padding: 18px 12px 44px;
+        gap: 14px;
+    }
+    .evt-cal-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .evt-cal-head h1 {
+        font-size: 1.55rem;
+    }
+    .evt-cal-controls {
+        width: 100%;
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        max-width: 100%;
+        overflow: hidden;
+        gap: 8px;
+    }
+    .evt-cal-month-switcher {
+        display: grid;
+        grid-template-columns: 42px minmax(0, calc(100vw - 112px)) 42px;
+        gap: 8px;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .evt-cal-nav {
+        width: 42px;
+        min-height: 42px;
+        padding: 8px;
+    }
+    .evt-cal-month {
+        min-width: 0;
+        width: 100%;
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #e5e7ef;
+        padding: 0 12px;
+        font-size: 1rem;
+    }
+    html[data-theme="dark"] .evt-cal-month {
+        background: #151a26;
+        border-color: #262d3d;
+    }
+    .evt-cal-map-link {
+        justify-content: center;
+        width: 100%;
+        min-height: 42px;
+    }
+    .evt-cal-grid {
+        border-radius: 16px;
+        padding: 8px;
+    }
+    .evt-cal-weekdays {
+        display: none;
+    }
+    .evt-cal-days {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .evt-cal-day--spacer {
+        display: none;
+    }
+    .evt-cal-day {
+        min-height: auto;
+        border-radius: 12px;
+        padding: 10px;
+        border: 1px solid #eef1f6;
+        background: #fff;
+    }
+    html[data-theme="dark"] .evt-cal-day {
+        background: #1c2231;
+        border-color: #262d3d;
+    }
+    .evt-cal-day.is-empty {
+        display: none;
+    }
+    .evt-cal-day.is-today,
+    html[data-theme="dark"] .evt-cal-day.is-today {
+        display: flex;
+    }
+    .evt-cal-day__num {
+        font-size: 1rem;
+    }
+    .evt-cal-day__num small {
+        display: inline;
+    }
+    .evt-cal-day__events {
+        gap: 6px;
+        overflow: visible;
+    }
+    .evt-cal-event {
+        min-height: 38px;
+        border-radius: 9px;
+        padding: 8px 10px;
+        font-size: 0.86rem;
+        white-space: normal;
+    }
+    .evt-cal-event span {
+        white-space: normal;
+    }
+    .evt-cal-event--more {
+        min-height: 34px;
+    }
+    .evt-cal-empty {
+        padding: 32px 10px 24px;
+    }
+    .evt-cal-mobile-help {
+        display: flex;
+    }
 }
 
 /* =====================================================
