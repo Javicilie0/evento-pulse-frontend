@@ -151,7 +151,7 @@ export function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link className="dropdown-item" href={`/profile/${session.user.id}`}>
+                      <Link className="dropdown-item" href="/profile/me">
                         <i className="bi bi-person-lines-fill" /> <span data-i18n="profile.public">Публичен профил</span>
                       </Link>
                     </li>

@@ -92,7 +92,7 @@ export function MobileNav() {
               </Link>
             </li>
             <li>
-              <Link className="dropdown-item" href={`/profile/${session.user.id}`}>
+              <Link className="dropdown-item" href="/profile/me">
                 <i className="bi bi-person-lines-fill" /> Публичен профил
               </Link>
             </li>
