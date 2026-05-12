@@ -7,12 +7,12 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 
 export default function ApplyOrganizerPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [form, setForm] = useState({
     organizationName: '',
     phoneNumber: '',
-    country: 'BG',
+    country: 'Bulgaria',
     city: '',
     website: '',
     companyNumber: '',
@@ -38,8 +38,9 @@ export default function ApplyOrganizerPage() {
     try {
       await api.post('/api/auth/apply-organizer', form)
       setSuccess(true)
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Грешка при кандидатстването.')
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } }
+      setError(apiError.response?.data?.error || 'Грешка при кандидатстването.')
     } finally {
       setLoading(false)
     }
@@ -52,7 +53,7 @@ export default function ApplyOrganizerPage() {
           <i className="bi bi-check-circle text-success" style={{ fontSize: '3rem' }} />
           <h2 className="groove-panel-title mt-3">Заявката е изпратена!</h2>
           <p className="groove-panel-intro">Администраторът ще прегледа заявката ти скоро.</p>
-          <Link href="/" className="groove-button groove-button-dark mt-3"><i className="bi bi-house" /> Начало</Link>
+          <Link href="/account" className="groove-button groove-button-dark mt-3"><i className="bi bi-person-circle" /> Към профила</Link>
         </div>
       </section>
     )
@@ -66,7 +67,7 @@ export default function ApplyOrganizerPage() {
           <h1>Кандидатствай за <span>организатор</span>.</h1>
           <p className="groove-page-hero__lead">Попълни формата и ние ще разгледаме заявката ти.</p>
         </div>
-        <Link href="/" className="groove-button groove-button-paper"><i className="bi bi-arrow-left" /> Назад</Link>
+        <Link href="/account" className="groove-button groove-button-paper"><i className="bi bi-arrow-left" /> Назад</Link>
       </div>
 
       <div className="groove-paper-card mt-4">
@@ -78,30 +79,46 @@ export default function ApplyOrganizerPage() {
           <div className="row g-3">
             <div className="col-12">
               <div className="auth-zine-field">
-                <label>Организация / Сценичен псевдоним *</label>
+                <label>Име на организация / място *</label>
                 <input type="text" className="form-control" value={form.organizationName}
-                  onChange={e => set('organizationName', e.target.value)} required maxLength={200} />
+                  onChange={e => set('organizationName', e.target.value)} required maxLength={200} placeholder="напр. Sound Factory Events" />
+              </div>
+            </div>
+            <div className="col-12">
+              <div className="auth-zine-field">
+                <label>Описание</label>
+                <textarea className="form-control" rows={4} value={form.description}
+                  onChange={e => set('description', e.target.value)} maxLength={1000}
+                  placeholder="Опиши организацията си и какви събития организираш..."
+                  style={{ resize: 'vertical' }} />
               </div>
             </div>
             <div className="col-md-6">
               <div className="auth-zine-field">
-                <label>Телефон *</label>
+                <label>Телефон</label>
                 <input type="tel" className="form-control" value={form.phoneNumber}
-                  onChange={e => set('phoneNumber', e.target.value)} required />
+                  onChange={e => set('phoneNumber', e.target.value)} placeholder="+359 88 123 4567" />
               </div>
             </div>
             <div className="col-md-6">
               <div className="auth-zine-field">
-                <label>Град *</label>
+                <label>Град</label>
                 <input type="text" className="form-control" value={form.city}
-                  onChange={e => set('city', e.target.value)} required maxLength={100} />
+                  onChange={e => set('city', e.target.value)} maxLength={100} placeholder="София" />
               </div>
             </div>
             <div className="col-md-6">
               <div className="auth-zine-field">
                 <label>Държава</label>
-                <input type="text" className="form-control" value={form.country}
-                  onChange={e => set('country', e.target.value)} maxLength={5} />
+                <select className="form-select" value={form.country} onChange={e => set('country', e.target.value)}>
+                  <option value="Bulgaria">Bulgaria</option>
+                  <option value="Romania">Romania</option>
+                  <option value="Greece">Greece</option>
+                  <option value="Serbia">Serbia</option>
+                  <option value="North Macedonia">North Macedonia</option>
+                  <option value="Turkey">Turkey</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
             </div>
             <div className="col-md-6">
@@ -115,31 +132,36 @@ export default function ApplyOrganizerPage() {
               <div className="auth-zine-field">
                 <label>ЕИК / Фирмен номер</label>
                 <input type="text" className="form-control" value={form.companyNumber}
-                  onChange={e => set('companyNumber', e.target.value)} maxLength={50} />
+                  onChange={e => set('companyNumber', e.target.value)} maxLength={50} placeholder="123456789" />
               </div>
             </div>
             <div className="col-md-6">
               <div className="auth-zine-field">
                 <label>Как научи за нас?</label>
-                <input type="text" className="form-control" value={form.referralSource}
-                  onChange={e => set('referralSource', e.target.value)} maxLength={200} />
-              </div>
-            </div>
-            <div className="col-12">
-              <div className="auth-zine-field">
-                <label>Описание на дейността</label>
-                <textarea className="form-control" rows={4} value={form.description}
-                  onChange={e => set('description', e.target.value)} maxLength={1000}
-                  style={{ resize: 'vertical' }} />
+                <select className="form-select" value={form.referralSource} onChange={e => set('referralSource', e.target.value)}>
+                  <option value="">Избери</option>
+                  <option value="Google">Google</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="Friend">Препоръка</option>
+                  <option value="Event">От събитие</option>
+                  <option value="Other">Друго</option>
+                </select>
               </div>
             </div>
           </div>
 
+          <div className="alert alert-info small mt-4 mb-0">
+            <i className="bi bi-info-circle" /> С изпращането на тази заявка се съгласяваш данните за организацията да бъдат прегледани от нашия екип.
+            Само полето <strong>Име на организацията</strong> е задължително, а всички останали са по избор.
+          </div>
+
           <div className="groove-form-actions mt-4">
             <button type="submit" className="auth-zine-button auth-zine-button-teal" disabled={loading}>
-              <i className="bi bi-send" /> {loading ? 'Изпращане...' : 'Кандидатствай'}
+              <i className="bi bi-send" /> {loading ? 'Изпращане...' : 'Изпрати заявката'}
             </button>
-            <Link href="/" className="groove-button groove-button-paper">Отказ</Link>
+            <Link href="/account" className="groove-button groove-button-paper">Отказ</Link>
           </div>
         </form>
       </div>
