@@ -1,5 +1,7 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
 import Link from 'next/link'
+import type { Post } from '@/types/api'
+import { PostCard } from '@/components/posts/PostCard'
 
 interface AdminStats {
   usersCount: number
@@ -9,6 +11,7 @@ interface AdminStats {
   pendingEventsCount: number
   postsCount: number
   totalRevenue: number
+  recentPosts?: Post[]
 }
 
 export default async function AdminDashboardPage() {
@@ -34,7 +37,16 @@ export default async function AdminDashboardPage() {
       <div className="groove-page-hero">
         <div className="groove-page-hero__copy">
           <span className="groove-stamp groove-stamp-red">Администратор</span>
-          <h1 className="groove-panel-title">Административен панел</h1>
+          <h1>Админ <span>център</span>.</h1>
+          <p>Оттук управляваш роли, кандидатури, събития, публикации, билети и транзакции в Evento.</p>
+        </div>
+        <div className="groove-page-actions">
+          <Link href="/account" className="groove-button groove-button-paper">
+            <i className="bi bi-person-circle" /> Моят профил
+          </Link>
+          <Link href="/tickets/validate" className="groove-button groove-button-dark">
+            <i className="bi bi-qr-code-scan" /> Валидиране
+          </Link>
         </div>
       </div>
 
@@ -50,29 +62,46 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="row g-4 mt-2">
-        <div className="col-md-6">
-          <div className="groove-paper-card">
-            <h2 className="groove-panel-title mb-3">Бързи действия</h2>
-            <div className="d-flex flex-column gap-2">
-              <Link href="/admin/organizers" className="groove-button groove-button-paper">
-                <i className="bi bi-person-check" /> Одобряване на организатори
-                {stats.pendingOrganizersCount > 0 && <span className="badge bg-danger ms-2">{stats.pendingOrganizersCount}</span>}
-              </Link>
-              <Link href="/admin/events?pending=true" className="groove-button groove-button-paper">
-                <i className="bi bi-calendar-check" /> Одобряване на събития
-                {stats.pendingEventsCount > 0 && <span className="badge bg-danger ms-2">{stats.pendingEventsCount}</span>}
-              </Link>
-              <Link href="/admin/users" className="groove-button groove-button-paper">
-                <i className="bi bi-people" /> Управление на потребители
-              </Link>
-              <Link href="/admin/events" className="groove-button groove-button-paper">
-                <i className="bi bi-calendar-event" /> Всички събития
-              </Link>
-            </div>
+      <section className="groove-page-section">
+        <div className="groove-section-bar">
+          <div>
+            <span className="groove-kicker">Бързи действия</span>
+            <h2>Всички <span>админ панели</span>.</h2>
           </div>
         </div>
-      </div>
+
+        <div className="groove-mini-grid">
+          {[
+            { kicker: 'Роли', title: 'Потребители', text: 'Смяна на роли и редакция на акаунти.', href: '/admin/users' },
+            { kicker: 'Кандидатури', title: 'Организатори', text: 'Преглед и одобряване на нови организатори.', href: '/admin/organizers' },
+            { kicker: 'Съдържание', title: 'Събития', text: 'Одобряване и управление на публикуваните събития.', href: '/admin/events' },
+            { kicker: 'Съдържание', title: 'Публикации', text: 'Преглед на постовете и тяхната активност.', href: '/admin/posts' },
+            { kicker: 'Продажби', title: 'Билети', text: 'Следене на продадени, използвани и активни билети.', href: '/admin/tickets' },
+            { kicker: 'Финанси', title: 'Транзакции', text: 'Списък с плащания и обобщение на приходите.', href: '/admin/transactions' },
+          ].map(action => (
+            <Link key={action.href} href={action.href} className="groove-paper-card admin-action-card">
+              <span className="groove-kicker">{action.kicker}</span>
+              <h3 className="mt-2">{action.title}</h3>
+              <p>{action.text}</p>
+              <span className="admin-action-card__cta">Отвори</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {!!stats.recentPosts?.length && (
+        <section className="groove-page-section">
+          <div className="groove-section-bar">
+            <div>
+              <span className="groove-kicker">Активност</span>
+              <h2>Последни <span>публикации</span>.</h2>
+            </div>
+          </div>
+          <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+            {stats.recentPosts.map(post => <div key={post.id} className="col"><PostCard post={post} /></div>)}
+          </div>
+        </section>
+      )}
     </section>
   )
 }
