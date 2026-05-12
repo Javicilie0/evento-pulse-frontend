@@ -36,6 +36,9 @@ export function EventCard({ event, canManage }: Props) {
 
   const isToday = new Date(event.startTime).toDateString() === new Date().toDateString()
   const description = event.description?.trim()
+  const descriptionPreview = description && description.length > 180
+    ? `${description.slice(0, 180).trimEnd()}...`
+    : description
 
   useEffect(() => {
     let joined = false
@@ -162,9 +165,12 @@ export function EventCard({ event, canManage }: Props) {
           </Link>
         )}
 
-        {description && (
+        {descriptionPreview && (
           <p className="evt-card__description" data-translate-text="event-description">
-            {event.organizerName && <strong>{event.organizerName}</strong>} {description}
+            {event.organizerName && <strong>{event.organizerName}</strong>} {descriptionPreview}{' '}
+            <Link href={`/events/${event.id}`} className="evt-card__more">
+              още
+            </Link>
           </p>
         )}
 

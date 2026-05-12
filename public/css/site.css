@@ -6592,6 +6592,8 @@ body.evt-home-bg .site-header { background: var(--evt-bg); }
     font-size: 0.9rem;
     line-height: 1.38;
     letter-spacing: 0;
+    position: relative;
+    z-index: 2;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -6600,6 +6602,16 @@ body.evt-home-bg .site-header { background: var(--evt-bg); }
 .evt-card__description strong {
     font-weight: 800;
     color: var(--evt-ink);
+}
+.evt-card__more {
+    color: var(--evt-ink-soft);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.evt-card__more:hover {
+    color: var(--evt-accent);
+    text-decoration: underline;
 }
 
 .evt-card__actions {
