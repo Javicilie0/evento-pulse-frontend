@@ -6,6 +6,7 @@ const PROTECTED_PREFIXES = [
   '/flow/new',
   '/inbox',
   '/profile/edit',
+  '/messages',
   '/tickets',
   '/organizer',
   '/admin',
@@ -37,7 +38,8 @@ export default auth((req) => {
 
   if (!session) return NextResponse.next()
 
-  const roles: string[] = (session?.user as any)?.roles ?? []
+  const user = session.user as { roles?: string[] } | undefined
+  const roles = user?.roles ?? []
   const isAdmin = roles.includes('Admin')
   const isOrganizer = roles.includes('Organizer') || isAdmin
 

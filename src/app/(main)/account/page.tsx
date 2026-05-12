@@ -51,6 +51,9 @@ export default async function AccountPage() {
               <Link href="/events/recommended" className="groove-button groove-button-paper">
                 <i className="bi bi-stars" /> <span>Препоръчани</span>
               </Link>
+              <Link href="/account/edit-application" className="groove-button groove-button-paper">
+                <i className="bi bi-building-check" /> <span>Редакция на кандидатура</span>
+              </Link>
             </div>
           </aside>
         </div>

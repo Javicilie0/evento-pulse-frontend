@@ -1,7 +1,6 @@
 import { authenticatedServerApi } from '@/lib/serverApi'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import type { UserProfile } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
 import { ProfileActions } from './ProfileActions'
@@ -44,14 +43,14 @@ export default async function ProfilePage({ params }: Props) {
           {profile.bio && <p>{profile.bio}</p>}
 
           <div className="social-profile-stats">
-            <span>
+            <Link href={`/profile/${profile.id}/followers`}>
               <strong>{profile.followerCount}</strong>
               <span data-i18n="profile.followers"> последователи</span>
-            </span>
-            <span>
+            </Link>
+            <Link href={`/profile/${profile.id}/following`}>
               <strong>{profile.followingCount}</strong>
               <span data-i18n="profile.following"> следвани</span>
-            </span>
+            </Link>
           </div>
 
           {!profile.isOwnProfile && (
