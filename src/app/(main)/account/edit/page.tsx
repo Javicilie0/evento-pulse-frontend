@@ -6,22 +6,22 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { mediaUrl } from '@/lib/media'
+import { MediaUploadField } from '@/components/forms/MediaUploadField'
 
 interface Me {
   id: string
   email: string
   userName: string
-  firstName?: string
-  lastName?: string
+  phoneNumber?: string
   profileImageUrl?: string
   bio?: string
 }
 
 export default function AccountEditPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [me, setMe] = useState<Me | null>(null)
-  const [form, setForm] = useState({ firstName: '', lastName: '', bio: '', profileImageUrl: '' })
+  const [form, setForm] = useState({ userName: '', email: '', phoneNumber: '', bio: '', profileImageUrl: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -33,8 +33,9 @@ export default function AccountEditPage() {
     api.get<Me>('/api/auth/me').then(r => {
       setMe(r.data)
       setForm({
-        firstName: r.data.firstName ?? '',
-        lastName: r.data.lastName ?? '',
+        userName: r.data.userName ?? '',
+        email: r.data.email ?? '',
+        phoneNumber: r.data.phoneNumber ?? '',
         bio: r.data.bio ?? '',
         profileImageUrl: r.data.profileImageUrl ?? '',
       })
@@ -53,8 +54,9 @@ export default function AccountEditPage() {
     try {
       await api.put('/api/auth/me', form)
       setSuccess(true)
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Грешка при запазването.')
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } }
+      setError(apiError.response?.data?.error || 'Грешка при запазването.')
     } finally {
       setSaving(false)
     }
@@ -65,20 +67,21 @@ export default function AccountEditPage() {
   }
 
   return (
-    <section className="groove-app-page">
-      <div className="groove-section-bar mb-4">
-        <div>
-          <span className="groove-kicker">Профил</span>
-          <h1 className="groove-panel-title">Редактирай профила</h1>
+    <section className="groove-app-page groove-form-shell groove-form-shell-narrow">
+      <div className="groove-page-hero">
+        <div className="groove-page-hero__copy">
+          <span className="groove-stamp groove-stamp-teal">Профил</span>
+          <h1>Редакция на <span>акаунта</span>.</h1>
+          <p>Обнови потребителското име, контактите и кратката си биография.</p>
         </div>
-        <Link href="/account" className="groove-button groove-button-paper">
-          <i className="bi bi-arrow-left" /> Назад
-        </Link>
+        <div className="groove-page-actions">
+          <Link href="/account" className="groove-button groove-button-paper">
+            <i className="bi bi-arrow-left" /> Обратно към профила
+          </Link>
+        </div>
       </div>
 
-      <div className="groove-split">
-        <div className="groove-split__main">
-          <div className="groove-paper-card">
+      <div className="groove-form-panel">
             <form onSubmit={handleSubmit} className="auth-zine-form">
               {success && (
                 <div className="alert alert-success"><i className="bi bi-check-circle me-2" />Профилът е запазен.</div>
@@ -90,28 +93,36 @@ export default function AccountEditPage() {
               <div className="row g-3">
                 <div className="col-md-6">
                   <div className="auth-zine-field">
-                    <label>Първо име</label>
-                    <input type="text" className="form-control" value={form.firstName}
-                      onChange={e => set('firstName', e.target.value)} maxLength={100} />
+                    <label>User name</label>
+                    <input type="text" className="form-control" value={form.userName}
+                      onChange={e => set('userName', e.target.value)} autoComplete="username" required maxLength={100} />
                   </div>
                 </div>
                 <div className="col-md-6">
                   <div className="auth-zine-field">
-                    <label>Фамилия</label>
-                    <input type="text" className="form-control" value={form.lastName}
-                      onChange={e => set('lastName', e.target.value)} maxLength={100} />
+                    <label>Email</label>
+                    <input type="email" className="form-control" value={form.email}
+                      onChange={e => set('email', e.target.value)} autoComplete="email" readOnly />
                   </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="auth-zine-field">
+                    <label>Phone number</label>
+                    <input type="tel" className="form-control" value={form.phoneNumber}
+                      onChange={e => set('phoneNumber', e.target.value)} autoComplete="tel" />
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <MediaUploadField
+                    label="Profile image"
+                    folder="profiles"
+                    value={form.profileImageUrl}
+                    onChange={url => set('profileImageUrl', url)}
+                  />
                 </div>
                 <div className="col-12">
                   <div className="auth-zine-field">
-                    <label>Снимка (URL)</label>
-                    <input type="url" className="form-control" value={form.profileImageUrl}
-                      onChange={e => set('profileImageUrl', e.target.value)} placeholder="https://..." />
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div className="auth-zine-field">
-                    <label>Биография</label>
+                    <label>Bio</label>
                     <textarea className="form-control" rows={4} value={form.bio}
                       onChange={e => set('bio', e.target.value)} maxLength={500}
                       style={{ resize: 'vertical' }} />
@@ -121,26 +132,17 @@ export default function AccountEditPage() {
 
               <div className="groove-form-actions mt-4">
                 <button type="submit" className="auth-zine-button auth-zine-button-teal" disabled={saving}>
-                  <i className="bi bi-floppy" /> {saving ? 'Запазване...' : 'Запази'}
+                  <i className="bi bi-check-lg" /> {saving ? 'Запазване...' : 'Запази промените'}
                 </button>
+                <Link href="/account" className="groove-button groove-button-paper">Отказ</Link>
               </div>
             </form>
-          </div>
-        </div>
 
-        <aside className="groove-split__side">
-          <div className="groove-info-card">
-            <div className="text-center mb-3">
-              {form.profileImageUrl
-                ? <img src={mediaUrl(form.profileImageUrl)} className="rounded-circle" width={80} height={80} alt="" style={{ objectFit: 'cover' }} />
-                : <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style={{ width: 80, height: 80 }}>
-                    <i className="bi bi-person fs-2 text-white" />
-                  </div>}
-            </div>
-            <h3 className="groove-panel-title text-center mb-1">{me.userName}</h3>
-            <p className="text-muted text-center small">{me.email}</p>
+        {form.profileImageUrl && (
+          <div className="mt-3">
+            <img src={mediaUrl(form.profileImageUrl)} alt="Current profile" style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: '50%' }} />
           </div>
-        </aside>
+        )}
       </div>
     </section>
   )
