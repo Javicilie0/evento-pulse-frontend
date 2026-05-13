@@ -7,9 +7,9 @@ import type { EventCard as EventCardType, PaginatedResult } from '@/types/api'
 import { mediaUrl } from '@/lib/media'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { Manrope } from 'next/font/google'
+import { Inter } from 'next/font/google'
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['cyrillic', 'latin'],
   display: 'swap',
 })
@@ -268,7 +268,7 @@ export default async function HomePage({ searchParams }: Props) {
   const isTabFree = sp.search === 'free'
 
   return (
-    <div className={`evt-shell evt-home-redesign ${manrope.className}`}>
+    <div className={`evt-shell evt-home-redesign evento-ds-home ${inter.className}`}>
 
       {/* Marquee — instant */}
       <div className="evt-marquee" aria-hidden="true">
@@ -291,16 +291,23 @@ export default async function HomePage({ searchParams }: Props) {
       {/* Hero — text renders INSTANTLY, stats + map stream in */}
       <section className="evt-hero">
         <div className="evt-hero__copy">
+          <div className="evento-ds-stamp">
+            <i className="bi bi-broadcast-pin" />
+            <span>Evento pulse · България на живо</span>
+          </div>
           <h1 className="evt-hero__title" data-i18n-html="home.hero.h1">
             Открий <span>събития</span> наблизо.
           </h1>
           <p className="evt-hero__lead" data-i18n="home.hero.p">
             Концерти, театър, клубни вечери и фестивали в една компактна карта.
           </p>
+          <p className="evento-ds-diary">
+            Дневникът на града, подреден по настроение, място и вечер.
+          </p>
           <div className="evt-hero__cta">
             <Link href="/events/recommended" className="evt-btn evt-btn-primary">
               <i className="bi bi-compass" />
-              <span data-i18n="home.viewmap">Препоръчани</span>
+              <span data-i18n="home.viewmap">Виж картата</span>
             </Link>
             <Link href="/calendar" className="evt-btn evt-btn-ghost">
               <i className="bi bi-calendar3" />
@@ -317,6 +324,15 @@ export default async function HomePage({ searchParams }: Props) {
           </Suspense>
         </div>
 
+        <img
+          className="evento-ds-logo-sticker"
+          src="/design-system/logo.png"
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          decoding="async"
+        />
+
         {/* Map streams in */}
         <Suspense fallback={
           <div style={{ flex: 1, minHeight: 280, background: 'linear-gradient(135deg,#e5e7eb,#f3f4f6)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -325,6 +341,11 @@ export default async function HomePage({ searchParams }: Props) {
         }>
           <HomeMapServer sp={sp} page={page} />
         </Suspense>
+
+        <div className="evento-ds-paper-stamp" aria-hidden="true">
+          <span>Дневник на града</span>
+          <img src="/design-system/crowd-doodle.png" alt="" loading="lazy" decoding="async" />
+        </div>
       </section>
 
       {/* Map event preview panel */}
